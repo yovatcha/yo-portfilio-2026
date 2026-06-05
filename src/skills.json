@@ -3,6 +3,7 @@
   { "name": "JavaScript", "icon": "javascript", "color": "#F7DF1E", "level": 5 },
   { "name": "TypeScript", "icon": "typescript", "color": "#3178C6", "level": 4 },
   { "name": "Node.js", "icon": "nodedotjs", "color": "#5FA04E", "level": 4 },
+  { "name": "Flutter", "icon": "flutter", "color": "#5FA04E", "level": 4 },
   { "name": "HTML5", "icon": "html5", "color": "#E34F26", "level": 3 },
   { "name": "CSS3", "icon": "css", "color": "#1572B6", "level": 3 },
   { "name": "Git", "icon": "git", "color": "#F05032", "level": 3 },
