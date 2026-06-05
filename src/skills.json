@@ -1,0 +1,13 @@
+[
+  { "name": "React", "icon": "react", "color": "#61DAFB", "level": 5 },
+  { "name": "JavaScript", "icon": "javascript", "color": "#F7DF1E", "level": 5 },
+  { "name": "TypeScript", "icon": "typescript", "color": "#3178C6", "level": 4 },
+  { "name": "Node.js", "icon": "nodedotjs", "color": "#5FA04E", "level": 4 },
+  { "name": "HTML5", "icon": "html5", "color": "#E34F26", "level": 3 },
+  { "name": "CSS3", "icon": "css", "color": "#1572B6", "level": 3 },
+  { "name": "Git", "icon": "git", "color": "#F05032", "level": 3 },
+  { "name": "Three.js", "icon": "threedotjs", "color": "#34e0d6", "level": 2 },
+  { "name": "Vite", "icon": "vite", "color": "#646CFF", "level": 2 },
+  { "name": "Tailwind", "icon": "tailwindcss", "color": "#06B6D4", "level": 2 },
+  { "name": "Figma", "icon": "figma", "color": "#F24E1E", "level": 2 }
+]

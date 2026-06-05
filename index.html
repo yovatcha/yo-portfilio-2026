@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="3D portfolio of CHAIYO — YOUR TITLE. Built with Three.js."
+    />
+    <title>CHAIYO · Portfolio</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- The Three.js canvas renders into this fixed full-screen layer -->
+    <canvas id="webgl"></canvas>
+
+    <!-- Loading overlay, removed once the scene is ready -->
+    <div id="loader" class="loader">
+      <div class="loader__bar"><span></span></div>
+      <p class="loader__text">Loading Yo's experience…</p>
+    </div>
+
+    <!-- Foreground HTML content sits above the canvas -->
+    <main id="content">
+      <nav class="nav">
+        <a href="#hero" class="nav__brand">CHAIYO</a>
+        <ul class="nav__links">
+          <li><a href="#about">About</a></li>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+
+      <!-- HERO -->
+      <section id="hero" class="section section--hero">
+        <p class="hero__eyebrow">Hello, I'm</p>
+        <h1 class="hero__title">Vatcharamai</h1>
+        <p class="hero__subtitle">just call me Chaiyo.</p>
+        <p class="hero__lead">
+          Working as a Software Developer, with a limitless passion for learning and growing every day.
+        </p>
+        <a href="#projects" class="btn">View my work</a>
+        <div class="scroll-hint" aria-hidden="true">
+          <span></span>Scroll
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" class="section section--about">
+        <div class="about__layout">
+          <!-- 3D tilt portrait. The JS in main.js drives the rotation. -->
+          <div class="about__photo" id="aboutPhoto">
+            <div class="about__glow" aria-hidden="true"></div>
+            <div class="about__ring" aria-hidden="true"></div>
+            <img
+              class="about__img"
+              src="images/IMG_6042-Photoroom_1.png"
+              alt="Portrait of Chaiyo"
+              draggable="false"
+            />
+          </div>
+
+          <div class="panel about__text">
+            <h2 class="section__title">About Yo</h2>
+            <p class="section__lead">
+              Hi, I'm <strong>Chaiyo</strong> or <strong>Yo</strong>. A software developer who turns ideas into
+              clean, fast, and delightful experiences on the web and application.
+            </p>
+            <p>
+              I'm driven by a limitless passion for learning and growing every
+              day — solving real problems with thoughtful code and building
+              things that feel polished from the first pixel to the last.
+            </p>
+
+            <ul class="about__facts">
+              <li>
+                <span class="about__facts-label">Name</span>
+                <span class="about__facts-value">Vatcharamai Rodring</span>
+              </li>
+              <li>
+                <span class="about__facts-label">Nickname</span>
+                <span class="about__facts-value">Chaiyo</span>
+              </li>
+              <li>
+                <span class="about__facts-label">Born</span>
+                <span class="about__facts-value">21 Sep 2002</span>
+              </li>
+              <li>
+                <span class="about__facts-label">Role</span>
+                <span class="about__facts-value">Software Developer</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Experience + Education -->
+        <div class="timeline-grid">
+          <!-- Work Experience -->
+          <div class="timeline" aria-label="Work experience">
+            <h3 class="timeline__title">Work Experience</h3>
+            <div class="timeline__track">
+              <span class="timeline__line" aria-hidden="true"></span>
+
+              <article class="timeline__item">
+                <span class="timeline__node timeline__node--current" aria-hidden="true"></span>
+                <div class="timeline__card timeline__card--current panel">
+                  <img
+                    class="timeline__logo"
+                    src="images/workingplace/odt-website.png"
+                    alt="ODT logo"
+                    loading="lazy"
+                  />
+                  <span class="timeline__badge">
+                    <span class="timeline__badge-dot" aria-hidden="true"></span>
+                    Jan 2025 — Present
+                  </span>
+                  <h4 class="timeline__role">Software Developer</h4>
+                  <p class="timeline__place">ODT · Full-time</p>
+                  <p class="timeline__desc">
+                    What you do day to day, the stack you work in, and the
+                    impact you've made. Replace with your current role.
+                  </p>
+                </div>
+              </article>
+
+              <article class="timeline__item">
+                <span class="timeline__node" aria-hidden="true"></span>
+                <div class="timeline__card panel">
+                  <img
+                    class="timeline__logo"
+                    src="images/workingplace/331534251_885416199434021_5814780594105058477_n.jpg"
+                    alt="DevForward.tech logo"
+                    loading="lazy"
+                  />
+                  <span class="timeline__year">June — August 2024</span>
+                  <h4 class="timeline__role">Full-stack Developer</h4>
+                  <p class="timeline__place">DevForward.tech · Internship</p>
+                  <p class="timeline__desc">
+                    A line about an earlier role or internship and what you
+                    built there. Delete this card if not needed.
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- Education -->
+          <div class="timeline" aria-label="Education">
+            <h3 class="timeline__title">Education</h3>
+            <div class="timeline__track">
+              <span class="timeline__line" aria-hidden="true"></span>
+
+              <article class="timeline__item">
+                <span class="timeline__node" aria-hidden="true"></span>
+                <div class="timeline__card panel">
+                  <img
+                    class="timeline__logo"
+                    src="images/workingplace/kmutt.png"
+                    alt="King Mongkut's University of Technology Thonburi logo"
+                    loading="lazy"
+                  />
+                  <span class="timeline__year">2021 — 2024</span>
+                  <h4 class="timeline__role">B.Sc. Computer Science</h4>
+                  <p class="timeline__place">King Mongkut's University of Technology Thonburi</p>
+                  <p class="timeline__desc">
+                    Degree, focus, and anything notable — honors, key projects,
+                    or relevant coursework. Replace with your details.
+                  </p>
+                </div>
+              </article>
+
+              <article class="timeline__item">
+                <span class="timeline__node" aria-hidden="true"></span>
+                <div class="timeline__card panel">
+                  <img
+                    class="timeline__logo"
+                    src="images/workingplace/satitpsm.png"
+                    alt="Satit Prasarnmit Demonstration School logo"
+                    loading="lazy"
+                  />
+                  <span class="timeline__year">2018 — 2020</span>
+                  <h4 class="timeline__role">Senior High School</h4>
+                  <p class="timeline__place">Satit Prasarnmit Demonstration School (secondary) · Computer Major</p>
+                  <p class="timeline__desc">
+                    Where it started. Replace with your school and a short line.
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="projects" class="section">
+        <h2 class="section__title">Projects</h2>
+        <div class="projects">
+          <article class="card">
+            <div class="card__tag">Web App</div>
+            <h3>Project One</h3>
+            <p>
+              A short description of what this project does and the impact it
+              had. Mention the stack and your role.
+            </p>
+            <div class="card__tech">
+              <span>Three.js</span><span>Vite</span><span>GLSL</span>
+            </div>
+            <a href="#" class="card__link">View project →</a>
+          </article>
+
+          <article class="card">
+            <div class="card__tag">Open Source</div>
+            <h3>Project Two</h3>
+            <p>
+              Another project description. Highlight a challenge you solved and
+              the result you're proud of.
+            </p>
+            <div class="card__tech">
+              <span>React</span><span>Node</span><span>WebGL</span>
+            </div>
+            <a href="#" class="card__link">View project →</a>
+          </article>
+
+          <article class="card">
+            <div class="card__tag">Experiment</div>
+            <h3>Project Three</h3>
+            <p>
+              A creative experiment or side project. Great place to show
+              personality and range.
+            </p>
+            <div class="card__tech">
+              <span>Shaders</span><span>Canvas</span><span>TypeScript</span>
+            </div>
+            <a href="#" class="card__link">View project →</a>
+          </article>
+        </div>
+      </section>
+
+      <!-- SKILLS -->
+      <section id="skills" class="section">
+        <h2 class="section__title">Skills</h2>
+        <p class="section__lead">
+          A cloud of the tech I work with — the bigger the bubble, the more I
+          lean on it. Hover a bubble to see what it is.
+        </p>
+        <!-- Bubbles are rendered from src/skills.json by main.js -->
+        <div class="bubbles" id="bubbles"></div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact" class="section section--contact">
+        <div class="panel panel--center">
+          <h2 class="section__title">Let's work together</h2>
+          <p class="section__lead">
+            Have a project in mind, or just want to say hi? My inbox is always
+            open.
+          </p>
+          <a href="mailto:you@example.com" class="btn">Say hello</a>
+          <ul class="socials">
+            <li><a href="#" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="#" target="_blank" rel="noopener">LinkedIn</a></li>
+            <li><a href="#" target="_blank" rel="noopener">Twitter</a></li>
+          </ul>
+        </div>
+        <footer class="footer">
+          © <span id="year"></span> Vatcharamai — Built with Three.js
+        </footer>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
