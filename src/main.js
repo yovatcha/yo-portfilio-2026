@@ -264,6 +264,50 @@ if (aboutPhoto && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
   aboutSection.addEventListener('pointerleave', reset);
 }
 
+// ---------- Copy email to clipboard ----------
+// The email lives only on the mailto link, so updating it there keeps the
+// copy button in sync automatically.
+const copyBtn = document.getElementById('copy-email');
+const emailLink = document.getElementById('email-link');
+if (copyBtn && emailLink) {
+  const email = emailLink.getAttribute('href').replace(/^mailto:/, '');
+  const label = copyBtn.querySelector('.copy-email__label');
+  const original = label?.textContent ?? 'Copy email';
+  let resetId;
+
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Fallback for browsers / insecure contexts without the Clipboard API.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } catch {
+        /* give up silently */
+      }
+      ta.remove();
+    }
+  };
+
+  copyBtn.addEventListener('click', async () => {
+    await copyText(email);
+    copyBtn.classList.add('is-copied');
+    if (label) label.textContent = 'Copied!';
+    clearTimeout(resetId);
+    resetId = setTimeout(() => {
+      copyBtn.classList.remove('is-copied');
+      if (label) label.textContent = original;
+    }, 1600);
+  });
+}
+
 // ---------- Footer year ----------
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
