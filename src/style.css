@@ -144,6 +144,54 @@ body {
   color: var(--fg);
 }
 
+/* Nav play/pause button */
+.nav__play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 50%, var(--border));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.nav__play:hover {
+  transform: scale(1.08);
+  border-color: var(--accent-2);
+  background: color-mix(in srgb, var(--accent-2) 14%, transparent);
+}
+.nav__play-icon {
+  width: 16px;
+  height: 16px;
+  grid-area: 1 / 1;
+}
+/* Show play by default, pause while playing */
+.nav__play-icon--pause { display: none; }
+.nav__play.is-playing .nav__play-icon--play { display: none; }
+.nav__play.is-playing .nav__play-icon--pause { display: block; }
+.nav__play.is-playing {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+/* Pulsing ring while a track is playing */
+.nav__play-pulse {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0;
+}
+.nav__play.is-playing .nav__play-pulse {
+  animation: nav-play-pulse 1.6s ease-out infinite;
+}
+@keyframes nav-play-pulse {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
 /* ---------- Sections ---------- */
 .section {
   position: relative;

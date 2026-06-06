@@ -81,50 +81,113 @@ if (projectsEl) {
     .join('');
 }
 
-// ---------- Spotify player (random track per visitor) ----------
-// Tracks come from the /api/spotify serverless function (a random song from a
-// public playlist). If that's unavailable (e.g. local `vite dev`, or env vars
-// not set), it falls back to the static list in tracks.json.
-// Browsers block autoplay-with-sound, so we randomize WHICH track loads and
-// the visitor presses play. "Shuffle" swaps in another random track.
-const spotifyFrame = document.getElementById('spotify-embed');
-if (spotifyFrame) {
+// ---------- Spotify player (random track + nav play button) ----------
+// Uses Spotify's IFrame API so the nav button can actually start/stop playback
+// (a button click is the user gesture browsers require to allow audio).
+// Tracks come from /api/spotify (a random song from a public playlist), with
+// tracks.json as the fallback when the API is unavailable (e.g. `vite dev`).
+// Full playback needs the visitor to be logged into Spotify; otherwise it's a
+// ~30s preview. There is no true autoplay — the first play needs a click.
+const spotifyMount = document.getElementById('spotify-embed');
+if (spotifyMount) {
   const nowEl = document.getElementById('music-now');
+  const navPlay = document.getElementById('nav-play');
   let pool = tracks.map((t) => ({ id: t.id, type: t.type || 'track' }));
   let lastIndex = -1;
+  let controller = null;
+  let isPlaying = false;
 
-  const loadRandomTrack = () => {
-    if (!pool.length) return;
+  const pickRandom = () => {
     let i = Math.floor(Math.random() * pool.length);
     if (pool.length > 1) {
       while (i === lastIndex) i = Math.floor(Math.random() * pool.length);
     }
     lastIndex = i;
-    const t = pool[i];
-    spotifyFrame.src = `https://open.spotify.com/embed/${t.type || 'track'}/${t.id}?utm_source=generator&theme=0`;
-    if (nowEl) nowEl.textContent = t.name ? `🎵 ${t.name} — ${t.artist}` : '';
+    return pool[i];
   };
 
-  // Try the API first; fall back to the bundled list on any failure.
-  (async () => {
-    try {
-      const res = await fetch('/api/spotify');
-      const ct = res.headers.get('content-type') || '';
-      if (res.ok && ct.includes('application/json')) {
-        const data = await res.json();
-        if (Array.isArray(data.tracks) && data.tracks.length) {
-          pool = data.tracks.map((t) => ({ ...t, type: 'track' }));
-        }
-      }
-    } catch {
-      /* keep the tracks.json fallback */
-    }
-    loadRandomTrack();
-  })();
+  const setNow = (t) => {
+    if (nowEl) nowEl.textContent = t?.name ? `🎵 ${t.name} — ${t.artist}` : '';
+  };
 
+  const setPlayingState = (playing) => {
+    isPlaying = playing;
+    if (navPlay) {
+      navPlay.classList.toggle('is-playing', playing);
+      navPlay.setAttribute('aria-pressed', String(playing));
+      navPlay.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
+      navPlay.title = playing ? 'Pause music' : 'Play music';
+    }
+  };
+
+  const uriOf = (t) => `spotify:${t.type || 'track'}:${t.id}`;
+
+  // Load a random track into the player. `autoplay` only works when called
+  // from a user gesture (the nav button / shuffle click).
+  const loadRandomTrack = (autoplay = false) => {
+    if (!controller || !pool.length) return;
+    const t = pickRandom();
+    controller.loadUri(uriOf(t));
+    setNow(t);
+    if (autoplay) controller.play();
+  };
+
+  const buildPlayer = () => {
+    // Resolve the track pool (API first, fallback to tracks.json), then mount.
+    const start = (initial) => {
+      window.onSpotifyIframeApiReady = (IFrameAPI) => {
+        IFrameAPI.createController(
+          spotifyMount,
+          { uri: uriOf(initial), width: '100%', height: 152, theme: 'dark' },
+          (ctrl) => {
+            controller = ctrl;
+            setNow(initial);
+            ctrl.addListener('playback_update', (e) => {
+              setPlayingState(!e.data.isPaused);
+            });
+          }
+        );
+      };
+      // Inject the IFrame API script once.
+      if (!document.getElementById('spotify-iframe-api')) {
+        const s = document.createElement('script');
+        s.id = 'spotify-iframe-api';
+        s.src = 'https://open.spotify.com/embed/iframe-api/v1';
+        s.async = true;
+        document.body.appendChild(s);
+      }
+    };
+
+    (async () => {
+      try {
+        const res = await fetch('/api/spotify');
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && ct.includes('application/json')) {
+          const data = await res.json();
+          if (Array.isArray(data.tracks) && data.tracks.length) {
+            pool = data.tracks.map((t) => ({ ...t, type: 'track' }));
+          }
+        }
+      } catch {
+        /* keep the tracks.json fallback */
+      }
+      lastIndex = Math.floor(Math.random() * pool.length);
+      start(pool[lastIndex]);
+    })();
+  };
+
+  buildPlayer();
+
+  // Nav button: toggle play/pause (starts the first random track if idle).
+  navPlay?.addEventListener('click', () => {
+    if (!controller) return;
+    controller.togglePlay();
+  });
+
+  // Shuffle: load a different random track and play it (user gesture → audio OK).
   document
     .getElementById('music-shuffle')
-    ?.addEventListener('click', loadRandomTrack);
+    ?.addEventListener('click', () => loadRandomTrack(true));
 }
 
 // ---------- Scroll-reveal animations for content ----------
