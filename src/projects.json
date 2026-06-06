@@ -1,0 +1,23 @@
+[
+  {
+    "tag": "Web / App",
+    "title": "Gig&Co",
+    "description": "A short description of what this project does and the impact it had. Mention the stack and your role.",
+    "tech": ["ViteTS", "Node", "Flutter"],
+    "link": "https://gigandco.work/"
+  },
+  {
+    "tag": "Open Source",
+    "title": "Project Two",
+    "description": "Another project description. Highlight a challenge you solved and the result you're proud of.",
+    "tech": ["React", "Node", "WebGL"],
+    "link": "#"
+  },
+  {
+    "tag": "Experiment",
+    "title": "Project Three",
+    "description": "A creative experiment or side project. Great place to show personality and range.",
+    "tech": ["Shaders", "Canvas", "TypeScript"],
+    "link": "#"
+  }
+]

@@ -35,7 +35,7 @@ export function createScene(canvas) {
 
   // ---------- Galaxy parameters ----------
   const params = {
-    count: 200000,
+    count: 60000,
     radius: 6,
     branches: 4,
     spin: 1.1,

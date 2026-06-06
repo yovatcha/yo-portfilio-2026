@@ -1,6 +1,15 @@
 import './style.css';
 import { createScene } from './scene.js';
 import skills from './skills.json';
+import projects from './projects.json';
+
+// Escape user-provided text before injecting into markup.
+const esc = (str = '') =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
 // ---------- Boot the 3D scene ----------
 const canvas = document.getElementById('webgl');
@@ -41,6 +50,32 @@ if (bubblesEl) {
           <img class="bubble__logo" src="https://cdn.simpleicons.org/${s.icon}/white" alt="" aria-hidden="true" loading="lazy" />
           <span class="bubble__name">${s.name}</span>
         </div>`;
+    })
+    .join('');
+}
+
+// ---------- Project cards (rendered from projects.json) ----------
+// Each project: { tag, title, description, tech: [..], link }
+const projectsEl = document.getElementById('projects-grid');
+if (projectsEl) {
+  projectsEl.innerHTML = projects
+    .map((p) => {
+      const tech = (p.tech || [])
+        .map((t) => `<span>${esc(t)}</span>`)
+        .join('');
+      const link = p.link
+        ? `<a href="${esc(p.link)}" class="card__link"${
+            p.link.startsWith('http') ? ' target="_blank" rel="noopener"' : ''
+          }>View project →</a>`
+        : '';
+      return `
+        <article class="card">
+          ${p.tag ? `<div class="card__tag">${esc(p.tag)}</div>` : ''}
+          <h3>${esc(p.title)}</h3>
+          <p>${esc(p.description)}</p>
+          <div class="card__tech">${tech}</div>
+          ${link}
+        </article>`;
     })
     .join('');
 }

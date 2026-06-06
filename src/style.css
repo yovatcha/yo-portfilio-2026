@@ -21,6 +21,14 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Images are decorative — ignore pointer/drag/selection so the cursor
+   passes through to the elements (cards, hero section) underneath. */
+img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
