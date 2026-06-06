@@ -2,7 +2,7 @@
   {
     "tag": "Web / App",
     "title": "Gig&Co",
-    "description": "A short description of what this project does and the impact it had. Mention the stack and your role.",
+    "description": "Gig&Co is a workforce marketplace platform designed to bridge businesses and gig workers. It enables organizations to recruit, manage, and pay temporary staff through a centralized digital platform, while providing workers with flexible job opportunities and a seamless work experience.",
     "tech": ["ViteTS", "Node", "Flutter"],
     "link": "https://gigandco.work/"
   },
