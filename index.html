@@ -66,6 +66,7 @@
               <svg class="nav__play-icon nav__play-icon--pause" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M6 5h4v14H6zm8 0h4v14h-4z" fill="currentColor" />
               </svg>
+              <span class="nav__play-spinner" aria-hidden="true"></span>
               <span class="nav__play-pulse" aria-hidden="true"></span>
             </button>
           </li>
@@ -280,6 +281,13 @@
         </p>
         <div class="music">
           <div class="music__player panel">
+            <!-- Loading placeholder shown until the Spotify player mounts -->
+            <div class="music__loading" id="music-loading">
+              <span class="music__loading-bars" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i>
+              </span>
+              <span>Loading player…</span>
+            </div>
             <!-- Spotify IFrame API mounts the player here (main.js) -->
             <div id="spotify-embed"></div>
           </div>

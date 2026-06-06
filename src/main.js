@@ -92,10 +92,19 @@ const spotifyMount = document.getElementById('spotify-embed');
 if (spotifyMount) {
   const nowEl = document.getElementById('music-now');
   const navPlay = document.getElementById('nav-play');
+  const loadingEl = document.getElementById('music-loading');
   let pool = tracks.map((t) => ({ id: t.id, type: t.type || 'track' }));
   let lastIndex = -1;
   let controller = null;
   let isPlaying = false;
+
+  // Loading state: active until the Spotify player has mounted.
+  const setLoading = (loading) => {
+    navPlay?.classList.toggle('is-loading', loading);
+    navPlay?.setAttribute('aria-busy', String(loading));
+    if (loadingEl) loadingEl.style.display = loading ? '' : 'none';
+  };
+  setLoading(true);
 
   const pickRandom = () => {
     let i = Math.floor(Math.random() * pool.length);
@@ -141,6 +150,7 @@ if (spotifyMount) {
           { uri: uriOf(initial), width: '100%', height: 152, theme: 'dark' },
           (ctrl) => {
             controller = ctrl;
+            setLoading(false);
             setNow(initial);
             ctrl.addListener('playback_update', (e) => {
               setPlayingState(!e.data.isPaused);

@@ -176,6 +176,32 @@ body {
   color: var(--accent);
   border-color: var(--accent);
 }
+/* Loading spinner on the nav button until the player mounts */
+.nav__play-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent-2) 25%, transparent);
+  border-top-color: var(--accent-2);
+  display: none;
+  animation: nav-play-spin 0.7s linear infinite;
+}
+.nav__play.is-loading {
+  cursor: progress;
+}
+.nav__play.is-loading .nav__play-icon {
+  display: none;
+}
+.nav__play.is-loading .nav__play-spinner {
+  display: block;
+}
+@keyframes nav-play-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Pulsing ring while a track is playing */
 .nav__play-pulse {
   position: absolute;
@@ -755,6 +781,40 @@ body {
 .music__player iframe {
   display: block;
   width: 100%;
+}
+/* Loading placeholder shown until the Spotify player mounts */
+.music__loading {
+  min-height: 152px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+.music__loading-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 26px;
+}
+.music__loading-bars i {
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(var(--accent-2), var(--accent));
+  transform-origin: bottom;
+  animation: eq-bounce 1s ease-in-out infinite;
+}
+.music__loading-bars i:nth-child(2) { animation-delay: 0.15s; }
+.music__loading-bars i:nth-child(3) { animation-delay: 0.3s; }
+.music__loading-bars i:nth-child(4) { animation-delay: 0.45s; }
+.music__loading-bars i:nth-child(5) { animation-delay: 0.6s; }
+@keyframes eq-bounce {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
 }
 .music__now {
   min-height: 1.2em;
