@@ -2,6 +2,7 @@ import './style.css';
 import { createScene } from './scene.js';
 import skills from './skills.json';
 import projects from './projects.json';
+import tracks from './tracks.json';
 
 // Escape user-provided text before injecting into markup.
 const esc = (str = '') =>
@@ -78,6 +79,52 @@ if (projectsEl) {
         </article>`;
     })
     .join('');
+}
+
+// ---------- Spotify player (random track per visitor) ----------
+// Tracks come from the /api/spotify serverless function (a random song from a
+// public playlist). If that's unavailable (e.g. local `vite dev`, or env vars
+// not set), it falls back to the static list in tracks.json.
+// Browsers block autoplay-with-sound, so we randomize WHICH track loads and
+// the visitor presses play. "Shuffle" swaps in another random track.
+const spotifyFrame = document.getElementById('spotify-embed');
+if (spotifyFrame) {
+  const nowEl = document.getElementById('music-now');
+  let pool = tracks.map((t) => ({ id: t.id, type: t.type || 'track' }));
+  let lastIndex = -1;
+
+  const loadRandomTrack = () => {
+    if (!pool.length) return;
+    let i = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1) {
+      while (i === lastIndex) i = Math.floor(Math.random() * pool.length);
+    }
+    lastIndex = i;
+    const t = pool[i];
+    spotifyFrame.src = `https://open.spotify.com/embed/${t.type || 'track'}/${t.id}?utm_source=generator&theme=0`;
+    if (nowEl) nowEl.textContent = t.name ? `🎵 ${t.name} — ${t.artist}` : '';
+  };
+
+  // Try the API first; fall back to the bundled list on any failure.
+  (async () => {
+    try {
+      const res = await fetch('/api/spotify');
+      const ct = res.headers.get('content-type') || '';
+      if (res.ok && ct.includes('application/json')) {
+        const data = await res.json();
+        if (Array.isArray(data.tracks) && data.tracks.length) {
+          pool = data.tracks.map((t) => ({ ...t, type: 'track' }));
+        }
+      }
+    } catch {
+      /* keep the tracks.json fallback */
+    }
+    loadRandomTrack();
+  })();
+
+  document
+    .getElementById('music-shuffle')
+    ?.addEventListener('click', loadRandomTrack);
 }
 
 // ---------- Scroll-reveal animations for content ----------

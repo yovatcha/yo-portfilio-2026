@@ -8,6 +8,8 @@
       content="3D portfolio of CHAIYO — YOUR TITLE. Built with Three.js."
     />
     <title>CHAIYO · Portfolio</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="theme-color" content="#07080d" />
     <link
       rel="preconnect"
       href="https://fonts.googleapis.com"
@@ -31,11 +33,28 @@
     <!-- Foreground HTML content sits above the canvas -->
     <main id="content">
       <nav class="nav">
-        <a href="#hero" class="nav__brand">CHAIYO</a>
+        <a href="#hero" class="nav__brand">
+          <svg class="nav__logo" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="navY" x1="120" y1="80" x2="400" y2="420" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFFFFF" />
+                <stop offset="45%" stop-color="#B98CFF" />
+                <stop offset="75%" stop-color="#5B4BFF" />
+                <stop offset="100%" stop-color="#49E6F5" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M160 120 C170 120 180 125 188 135 L256 230 L324 135 C332 125 342 120 352 120 L385 120 L286 260 C280 268 277 277 277 287 L277 400 C277 420 261 436 241 436 L220 436 L220 287 C220 277 217 268 211 260 L127 140 C119 129 127 120 139 120 Z"
+              fill="url(#navY)"
+            />
+          </svg>
+          <span>CHAIYO</span>
+        </a>
         <ul class="nav__links">
           <li><a href="#about">About</a></li>
           <li><a href="#projects">Projects</a></li>
           <li><a href="#skills">Skills</a></li>
+          <li><a href="#music">Music</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
@@ -231,6 +250,35 @@
         </p>
         <!-- Bubbles are rendered from src/skills.json by main.js -->
         <div class="bubbles" id="bubbles"></div>
+      </section>
+
+      <!-- MUSIC -->
+      <section id="music" class="section section--music">
+        <h2 class="section__title">Now Playing</h2>
+        <p class="section__lead">
+          A random pick from my rotation — hit play. Reload the page for a
+          different track.
+        </p>
+        <div class="music">
+          <div class="music__player panel">
+            <!-- src is set randomly by main.js from src/tracks.json -->
+            <iframe
+              id="spotify-embed"
+              title="Spotify player"
+              style="border-radius: 12px"
+              src="https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b?utm_source=generator&theme=0"
+              width="100%"
+              height="152"
+              frameborder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+            ></iframe>
+          </div>
+          <p class="music__now" id="music-now" aria-live="polite"></p>
+          <button id="music-shuffle" class="btn music__shuffle" type="button">
+            🎲 Shuffle track
+          </button>
+        </div>
       </section>
 
       <!-- CONTACT -->
