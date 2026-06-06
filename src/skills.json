@@ -1,14 +1,50 @@
 [
-  { "name": "React", "icon": "react", "color": "#61DAFB", "level": 5 },
-  { "name": "JavaScript", "icon": "javascript", "color": "#F7DF1E", "level": 5 },
-  { "name": "TypeScript", "icon": "typescript", "color": "#3178C6", "level": 4 },
-  { "name": "Node.js", "icon": "nodedotjs", "color": "#5FA04E", "level": 4 },
-  { "name": "Flutter", "icon": "flutter", "color": "#5FA04E", "level": 4 },
-  { "name": "HTML5", "icon": "html5", "color": "#E34F26", "level": 3 },
-  { "name": "CSS3", "icon": "css", "color": "#1572B6", "level": 3 },
-  { "name": "Git", "icon": "git", "color": "#F05032", "level": 3 },
-  { "name": "Three.js", "icon": "threedotjs", "color": "#34e0d6", "level": 2 },
-  { "name": "Vite", "icon": "vite", "color": "#646CFF", "level": 2 },
-  { "name": "Tailwind", "icon": "tailwindcss", "color": "#06B6D4", "level": 2 },
-  { "name": "Figma", "icon": "figma", "color": "#F24E1E", "level": 2 }
+  {
+    "group": "Frontend & Mobile",
+    "skills": [
+      { "name": "React", "icon": "react", "color": "#61DAFB", "level": 5 },
+      { "name": "Next.js", "icon": "nextdotjs", "color": "#FFFFFF", "level": 5 },
+      { "name": "TypeScript", "icon": "typescript", "color": "#3178C6", "level": 5 },
+      { "name": "JavaScript", "icon": "javascript", "color": "#F7DF1E", "level": 5 },
+      { "name": "HTML/CSS", "icon": "html5", "color": "#E34F26", "level": 4 },
+      { "name": "Tailwind CSS", "icon": "tailwindcss", "color": "#06B6D4", "level": 4 },
+      { "name": "Shadcn UI", "icon": "shadcnui", "color": "#FFFFFF", "level": 4 },
+      { "name": "Flutter", "icon": "flutter", "color": "#027DFD", "level": 3 },
+      { "name": "Three.js", "icon": "threedotjs", "color": "#34e0d6", "level": 2 }
+    ]
+  },
+  {
+    "group": "Backend & Data",
+    "skills": [
+      { "name": "PostgreSQL", "icon": "postgresql", "color": "#4169E1", "level": 4 },
+      { "name": "Prisma ORM", "icon": "prisma", "color": "#5B4BFF", "level": 5 },
+      { "name": "Node.js", "icon": "nodedotjs", "color": "#5FA04E", "level": 3 },
+      { "name": "Go", "icon": "go", "color": "#00ADD8", "level": 2 },
+      { "name": "Express", "icon": "express", "color": "#FFFFFF", "level": 2 },
+      { "name": "Ruby on Rails", "icon": "rubyonrails", "color": "#D30001", "level": 2 }
+    ]
+  },
+  {
+    "group": "DevOps & Infrastructure",
+    "skills": [
+      { "name": "Docker", "icon": "docker", "color": "#2496ED", "level": 3 },
+      { "name": "Linux", "icon": "linux", "color": "#FCC624", "level": 3 },
+      { "name": "CI/CD", "abbr": "CI/CD", "color": "#7c5cff", "level": 3 },
+      { "name": "Kubernetes", "icon": "kubernetes", "color": "#326CE5", "level": 1 }
+    ]
+  },
+  {
+    "group": "Design & Product",
+    "skills": [
+      { "name": "Figma", "icon": "figma", "color": "#F24E1E", "level": 5 },
+      { "name": "Design Systems", "abbr": "DS", "color": "#34e0d6", "level": 4 },
+      { "name": "UX Design", "abbr": "UX", "color": "#7c5cff", "level": 4 },
+      { "name": "UI Design", "abbr": "UI", "color": "#34e0d6", "level": 4 },
+      { "name": "Agile/Scrum", "abbr": "Agile", "color": "#34e0d6", "level": 4 },
+      { "name": "Product Thinking", "abbr": "Prod", "color": "#7c5cff", "level": 4 },
+      { "name": "Technical Communication", "abbr": "Comm", "color": "#34e0d6", "level": 4 },
+      { "name": "Requirements Analysis", "abbr": "Req", "color": "#7c5cff", "level": 4 },
+      { "name": "Illustrator", "abbr": "Ai", "color": "#FF9A00", "level": 3 }
+    ]
+  }
 ]

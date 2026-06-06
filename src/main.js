@@ -36,22 +36,35 @@ window.addEventListener('resize', updateScroll);
 updateScroll();
 
 // ---------- Skill bubbles (rendered from skills.json) ----------
-// Each skill: { name, icon, color, level: 1–5 } or an explicit { size } in px.
-// `icon` is a Simple Icons slug (https://simpleicons.org) — `level` controls
-// the bubble size: the higher the level, the bigger (= more expertise).
+// skills.json is grouped by domain so a visitor can see where the lean is:
+//   [{ group: "Frontend", skills: [{ name, icon, color, level: 1–5 }, …] }, …]
+// `icon` is a Simple Icons slug (https://simpleicons.org); `level` (or an
+// explicit `size` in px) controls the bubble size — bigger = more expertise.
 const bubblesEl = document.getElementById('bubbles');
 if (bubblesEl) {
-  const SIZE_BY_LEVEL = { 1: 68, 2: 82, 3: 100, 4: 122, 5: 150 };
-  bubblesEl.innerHTML = skills
-    .map((s) => {
-      const size = s.size ?? SIZE_BY_LEVEL[s.level] ?? 90;
-      const color = s.color ?? '#7c5cff';
-      return `
-        <div class="bubble" style="--size:${size}px;--c:${color}" tabindex="0" aria-label="${s.name}">
-          <img class="bubble__logo" src="https://cdn.simpleicons.org/${s.icon}/white" alt="" aria-hidden="true" loading="lazy" />
-          <span class="bubble__name">${s.name}</span>
+  const SIZE_BY_LEVEL = { 1: 46, 2: 56, 3: 68, 4: 82, 5: 98 };
+  const renderBubble = (s) => {
+    const size = s.size ?? SIZE_BY_LEVEL[s.level] ?? 90;
+    const color = s.color ?? '#7c5cff';
+    // Branded tech uses a Simple Icons logo; concept skills (no brand logo)
+    // fall back to a short text badge from `abbr` (or the name's initials).
+    const inner = s.icon
+      ? `<img class="bubble__logo" src="https://cdn.simpleicons.org/${esc(s.icon)}/white" alt="" aria-hidden="true" loading="lazy" />`
+      : `<span class="bubble__abbr">${esc(s.abbr || s.name)}</span>`;
+    return `
+        <div class="bubble" style="--size:${size}px;--c:${color}" tabindex="0" aria-label="${esc(s.name)}">
+          ${inner}
+          <span class="bubble__name">${esc(s.name)}</span>
         </div>`;
-    })
+  };
+  bubblesEl.innerHTML = skills
+    .map(
+      (g) => `
+      <div class="skill-group">
+        <h3 class="skill-group__title">${esc(g.group)}</h3>
+        <div class="bubbles__cloud">${g.skills.map(renderBubble).join('')}</div>
+      </div>`
+    )
     .join('');
 }
 
