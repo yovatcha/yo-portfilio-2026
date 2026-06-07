@@ -25,6 +25,30 @@ window.addEventListener('load', () => {
   });
 });
 
+// ---------- Mobile nav (hamburger toggle) ----------
+const nav = document.querySelector('.nav');
+const navToggle = document.getElementById('nav-toggle');
+const navMenu = document.getElementById('nav-menu');
+if (nav && navToggle && navMenu) {
+  const setOpen = (open) => {
+    nav.classList.toggle('is-open', open);
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+  navToggle.addEventListener('click', () =>
+    setOpen(!nav.classList.contains('is-open'))
+  );
+  // Close after tapping a link, or when clicking outside the nav.
+  navMenu.addEventListener('click', (e) => {
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', (e) => {
+    if (nav.classList.contains('is-open') && !nav.contains(e.target)) {
+      setOpen(false);
+    }
+  });
+}
+
 // ---------- Drive the scene from page scroll ----------
 function updateScroll() {
   const max = document.documentElement.scrollHeight - window.innerHeight;
