@@ -7,11 +7,15 @@
     "link": "https://gigandco.work/"
   },
   {
-    "tag": "Open Source",
-    "title": "Project Two",
-    "description": "Another project description. Highlight a challenge you solved and the result you're proud of.",
-    "tech": ["React", "Node", "WebGL"],
-    "link": "#"
+    "tag": "Web",
+    "title": "Thailand Election 2569",
+    "description": "A real-time election results platform built for Daily News (เดลินิวส์) covering Thailand's 2026 general election and national referendum. As results streamed in on election night, it reported live vote counts by candidate, party, and constituency on an interactive WebGL map of Thailand — with a Scala backend aggregating a continuous results feed and pushing sub-second updates to a React front end that stayed fast and stable under a massive nationwide traffic spike.",
+    "tech": [
+      "React",
+      "Scala",
+      "WebGL"
+    ],
+    "link": "https://election69.dailynews.co.th/"
   },
   {
     "tag": "Experiment",
