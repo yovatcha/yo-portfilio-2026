@@ -16,16 +16,8 @@
   {
     "tag": "Web Platform",
     "title": "Blocktrade",
-    "description": "A production block-trading platform for the Thai capital markets, moving large negotiated trades in SET equities and TFEX derivatives from order entry all the way to exchange settlement. Brokerage reps place orders that pass through a strict multi-role approval desk, out to the Stock Exchange of Thailand via the Settrade OpenAPI, and on to the broker's IFIS back office over the FIX protocol — with matched-order events streaming back to reconcile every leg in real time. It's an event-driven microservice system: React + TypeScript consoles for the trading desk and a separate investor portal, Node.js core and investor services, a Go FIX adapter and a Python exchange connector, all wired over RabbitMQ with Redis-backed idempotency so every approval and trade report executes exactly once, even under concurrent load.",
-    "tech": [
-      "React",
-      "TypeScript",
-      "Node.js",
-      "Go",
-      "Python",
-      "RabbitMQ",
-      "PostgreSQL"
-    ],
+    "description": "A production block-trading platform for the Thai capital markets, handling large SET equity and TFEX derivative trades from order entry to exchange settlement. Built as an event-driven microservice system — React dealer and investor consoles, Node.js services, a Go FIX adapter to the broker's back office, and a Python connector to the Stock Exchange of Thailand — tied together over RabbitMQ with real-time order updates.",
+    "tech": ["React", "TypeScript", "Node.js", "Go", "Python", "RabbitMQ"],
     "link": "https://www.cgsi.co.th/our-offerings/platform/bets?lang=TH"
   }
 ]
