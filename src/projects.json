@@ -1,6 +1,6 @@
 [
   {
-    "tag": "Web / App",
+    "tag": "Web / App Platform",
     "title": "Gig&Co",
     "description": "Gig&Co is a workforce marketplace platform designed to bridge businesses and gig workers. It enables organizations to recruit, manage, and pay temporary staff through a centralized digital platform, while providing workers with flexible job opportunities and a seamless work experience.",
     "tech": ["ViteTS", "Node", "Flutter"],
@@ -10,18 +10,22 @@
     "tag": "Web",
     "title": "Thailand Election 2569",
     "description": "A real-time election results platform built for Daily News (เดลินิวส์) covering Thailand's 2026 general election and national referendum. As results streamed in on election night, it reported live vote counts by candidate, party, and constituency on an interactive WebGL map of Thailand — with a Scala backend aggregating a continuous results feed and pushing sub-second updates to a React front end that stayed fast and stable under a massive nationwide traffic spike.",
-    "tech": [
-      "React",
-      "Scala",
-      "WebGL"
-    ],
+    "tech": ["React", "Scala", "WebGL"],
     "link": "https://election69.dailynews.co.th/"
   },
   {
-    "tag": "Experiment",
-    "title": "Project Three",
-    "description": "A creative experiment or side project. Great place to show personality and range.",
-    "tech": ["Shaders", "Canvas", "TypeScript"],
-    "link": "#"
+    "tag": "Web Platform",
+    "title": "Blocktrade",
+    "description": "A production block-trading platform for the Thai capital markets, moving large negotiated trades in SET equities and TFEX derivatives from order entry all the way to exchange settlement. Brokerage reps place orders that pass through a strict multi-role approval desk, out to the Stock Exchange of Thailand via the Settrade OpenAPI, and on to the broker's IFIS back office over the FIX protocol — with matched-order events streaming back to reconcile every leg in real time. It's an event-driven microservice system: React + TypeScript consoles for the trading desk and a separate investor portal, Node.js core and investor services, a Go FIX adapter and a Python exchange connector, all wired over RabbitMQ with Redis-backed idempotency so every approval and trade report executes exactly once, even under concurrent load.",
+    "tech": [
+      "React",
+      "TypeScript",
+      "Node.js",
+      "Go",
+      "Python",
+      "RabbitMQ",
+      "PostgreSQL"
+    ],
+    "link": "https://www.cgsi.co.th/our-offerings/platform/bets?lang=TH"
   }
 ]
