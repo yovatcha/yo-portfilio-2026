@@ -1,0 +1,62 @@
+# Vatcharamai Rodring (Chaiyo)
+
+> Vatcharamai Rodring — nicknamed Chaiyo (or Yo) — is a software developer based
+> in Bangkok, Thailand. He builds fast, clean web and application experiences and
+> has worked on large-scale production platforms in fintech, workforce, and media.
+
+- Full name: Vatcharamai Rodring
+- Also known as: Chaiyo, Yo, Chaiyo Vatcharamai, Yo Vatcharamai
+- Role: Software Developer
+- Current employer: ODT (since January 2025)
+- Location: Bangkok, Thailand
+- Born: 21 September 2002
+- Website: https://chaiyoyo.com/
+- Email: yoyo.rodring@gmail.com
+
+## Core technologies
+
+React, Next.js, TypeScript, JavaScript, Node.js, Three.js, Go, Python, FastAPI,
+PostgreSQL, Prisma, Flutter, Docker, Tailwind CSS, Figma, Agile/Scrum.
+
+## Projects
+
+- [Gig&Co](https://gigandco.work/): A workforce marketplace platform connecting
+  businesses with gig workers — recruit, manage, and pay temporary staff through
+  one digital platform. Built with Vite/TypeScript, Node.js, and Flutter.
+- [Thailand Election 2569](https://election69.dailynews.co.th/): A real-time
+  election-results platform built for Daily News (เดลินิวส์) covering Thailand's
+  2026 general election and national referendum, streaming live vote counts on an
+  interactive WebGL map. React front end, Scala backend, sub-second updates under
+  a nationwide traffic spike.
+- [Blocktrade](https://www.cgsi.co.th/our-offerings/platform/bets?lang=TH): A
+  production block-trading platform for the Thai capital markets, handling large
+  SET equity and TFEX derivative trades from order entry to exchange settlement.
+  Event-driven microservices — React consoles, Node.js services, a Go FIX adapter,
+  and a Python connector to the Stock Exchange of Thailand, tied together over
+  RabbitMQ.
+- KKP Tax Planner: A production product delivered with the ODT Scrum team.
+- LostNFound: A university campus lost-and-found platform (undergraduate thesis)
+  that matches reports using an NLP algorithm. Built with Next.js, FastAPI, and
+  PostgreSQL.
+
+## Experience
+
+- Software Developer, ODT — January 2025 to present. Scrum team shipping and
+  maintaining large-scale production products (Gig&Co, Blocktrade, KKP Tax Planner).
+- Full-stack Developer (Internship), DevForward.tech — June to August 2024.
+  Built a client web product end-to-end with Next.js and PHP.
+
+## Education
+
+- B.Sc. Computer Science, King Mongkut's University of Technology Thonburi
+  (KMUTT), 2021–2024.
+- Senior High School (Computer Major), Satit Prasarnmit Demonstration School,
+  2018–2020.
+
+## Links
+
+- Website: https://chaiyoyo.com/
+- GitHub: https://github.com/yovatcha
+- LinkedIn: https://www.linkedin.com/in/vatcharamai-rodring/
+- Instagram: https://www.instagram.com/yovatcha/
+- Facebook: https://www.facebook.com/vatcharamai.rodring/

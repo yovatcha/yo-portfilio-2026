@@ -29,8 +29,8 @@
       property="og:description"
       content="Portfolio of Vatcharamai Rodring — also known as Chaiyo or Yo. Software Developer with a passion for building clean, fast, and delightful experiences."
     />
-    <meta property="og:image" content="https://chaiyoyo.com/og-image.jpg" />
-    <meta property="og:image:secure_url" content="https://chaiyoyo.com/og-image.jpg" />
+    <meta property="og:image" content="https://chaiyoyo.com/og-image.png" />
+    <meta property="og:image:secure_url" content="https://chaiyoyo.com/og-image.png" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -49,7 +49,7 @@
       name="twitter:description"
       content="Portfolio of Vatcharamai Rodring — also known as Chaiyo or Yo. Software Developer with a passion for building clean, fast, and delightful experiences."
     />
-    <meta name="twitter:image" content="https://chaiyoyo.com/og-image.jpg" />
+    <meta name="twitter:image" content="https://chaiyoyo.com/og-image.png" />
     <meta
       name="twitter:image:alt"
       content="Vatcharamai Rodring (Chaiyo), Software Developer"
@@ -100,7 +100,16 @@
               "name": "Satit Prasarnmit Demonstration School"
             }
           ],
-          "knowsAbout": ["JavaScript", "TypeScript", "React", "Next.js", "Node.js", "Three.js", "Python", "FastAPI", "PostgreSQL"]
+          "knowsAbout": ["JavaScript", "TypeScript", "React", "Next.js", "Node.js", "Three.js", "Python", "FastAPI", "PostgreSQL"],
+          "hasOccupation": {
+            "@type": "Occupation",
+            "name": "Software Developer",
+            "occupationLocation": {
+              "@type": "City",
+              "name": "Bangkok, Thailand"
+            },
+            "skills": "React, Next.js, TypeScript, Node.js, Three.js, Go, Python, FastAPI, PostgreSQL, Flutter, Docker"
+          }
         },
         {
           "@type": "WebSite",
@@ -119,6 +128,69 @@
           "about": { "@id": "https://chaiyoyo.com/#person" },
           "primaryImageOfPage": "https://chaiyoyo.com/images/IMG_6042-Photoroom_1.webp",
           "inLanguage": "en"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Gig&Co",
+          "applicationCategory": "BusinessApplication",
+          "url": "https://gigandco.work/",
+          "author": { "@id": "https://chaiyoyo.com/#person" },
+          "description": "A workforce marketplace platform connecting businesses with gig workers — recruit, manage, and pay temporary staff through one digital platform. Built with Vite/TypeScript, Node.js, and Flutter."
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Thailand Election 2569",
+          "applicationCategory": "News",
+          "url": "https://election69.dailynews.co.th/",
+          "author": { "@id": "https://chaiyoyo.com/#person" },
+          "description": "A real-time election-results platform built for Daily News covering Thailand's 2026 general election and referendum, streaming live vote counts on an interactive WebGL map. React front end, Scala backend, sub-second updates under nationwide traffic."
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Blocktrade",
+          "applicationCategory": "FinanceApplication",
+          "url": "https://www.cgsi.co.th/our-offerings/platform/bets?lang=TH",
+          "author": { "@id": "https://chaiyoyo.com/#person" },
+          "description": "A production block-trading platform for the Thai capital markets handling SET equity and TFEX derivative trades from order entry to settlement. Event-driven microservices with React consoles, Node.js services, a Go FIX adapter, and a Python connector to the Stock Exchange of Thailand over RabbitMQ."
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://chaiyoyo.com/#faq",
+          "isPartOf": { "@id": "https://chaiyoyo.com/#website" },
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Who is Vatcharamai Rodring (Chaiyo)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Vatcharamai Rodring — nicknamed Chaiyo or Yo — is a software developer based in Bangkok, Thailand. He builds web and application experiences and has shipped large-scale production platforms in fintech, workforce, and media. He has worked at ODT since January 2025."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What technologies does Chaiyo work with?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Chaiyo specialises in React, Next.js, TypeScript, JavaScript, Node.js, and Three.js on the front end, with backend and data work in Go, Python, FastAPI, PostgreSQL, and Prisma, plus Flutter, Docker, and Figma."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What has Chaiyo built?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "His work includes Gig&Co (a workforce marketplace platform), Blocktrade (a block-trading platform for the Thai capital markets), a real-time Thailand election-results platform for Daily News, the KKP Tax Planner, and LostNFound (an NLP-based campus lost-and-found platform built as his university thesis)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How can I contact Chaiyo?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "You can reach Vatcharamai Rodring by email at yoyo.rodring@gmail.com, or via his website at https://chaiyoyo.com, GitHub (github.com/yovatcha), and LinkedIn (linkedin.com/in/vatcharamai-rodring)."
+              }
+            }
+          ]
         }
       ]
     }
@@ -267,6 +339,14 @@
               I'm driven by a limitless passion for learning and growing every
               day — solving real problems with thoughtful code and building
               things that feel polished from the first pixel to the last.
+            </p>
+            <p>
+              In short: <strong>Vatcharamai Rodring (Chaiyo)</strong> is a
+              software developer based in Bangkok, Thailand, working at ODT since
+              January 2025. He specialises in React, Next.js, TypeScript,
+              Node.js, and Three.js, and has shipped large-scale production
+              platforms including Gig&amp;Co, the Blocktrade trading system, and
+              a real-time Thailand election-results platform for Daily News.
             </p>
 
             <ul class="about__facts">
@@ -460,6 +540,53 @@
           <button id="music-shuffle" class="btn music__shuffle" type="button">
             Shuffle track
           </button>
+        </div>
+      </section>
+
+      <!-- FAQ — plain, extractable Q&A that mirrors the FAQPage JSON-LD.
+           Helps AI answer engines (ChatGPT, Perplexity, Gemini, AI Overviews)
+           lift accurate facts about Chaiyo. Keep answers in sync with the schema. -->
+      <section id="faq" class="section section--faq">
+        <h2 class="section__title">FAQ</h2>
+        <div class="faq">
+          <details class="faq__item panel">
+            <summary class="faq__q">Who is Vatcharamai Rodring (Chaiyo)?</summary>
+            <p class="faq__a">
+              Vatcharamai Rodring — nicknamed Chaiyo or Yo — is a software
+              developer based in Bangkok, Thailand. He builds web and application
+              experiences and has shipped large-scale production platforms in
+              fintech, workforce, and media. He has worked at ODT since January
+              2025.
+            </p>
+          </details>
+          <details class="faq__item panel">
+            <summary class="faq__q">What technologies does Chaiyo work with?</summary>
+            <p class="faq__a">
+              Chaiyo specialises in React, Next.js, TypeScript, JavaScript,
+              Node.js, and Three.js on the front end, with backend and data work
+              in Go, Python, FastAPI, PostgreSQL, and Prisma, plus Flutter,
+              Docker, and Figma.
+            </p>
+          </details>
+          <details class="faq__item panel">
+            <summary class="faq__q">What has Chaiyo built?</summary>
+            <p class="faq__a">
+              His work includes Gig&amp;Co (a workforce marketplace platform),
+              Blocktrade (a block-trading platform for the Thai capital markets),
+              a real-time Thailand election-results platform for Daily News, the
+              KKP Tax Planner, and LostNFound (an NLP-based campus lost-and-found
+              platform built as his university thesis).
+            </p>
+          </details>
+          <details class="faq__item panel">
+            <summary class="faq__q">How can I contact Chaiyo?</summary>
+            <p class="faq__a">
+              You can reach Vatcharamai Rodring by email at
+              <a href="mailto:yoyo.rodring@gmail.com">yoyo.rodring@gmail.com</a>,
+              or via GitHub (github.com/yovatcha) and LinkedIn
+              (linkedin.com/in/vatcharamai-rodring).
+            </p>
+          </details>
         </div>
       </section>
 

@@ -3,15 +3,9 @@ import { createScene } from './scene.js';
 import skills from './skills.json';
 import projects from './projects.json';
 import tracks from './tracks.json';
+import { renderBubbles, renderProjects } from './render.js';
 
 // Escape user-provided text before injecting into markup.
-const esc = (str = '') =>
-  String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
 // ---------- Boot the 3D scene ----------
 const canvas = document.getElementById('webgl');
 const experience = createScene(canvas);
@@ -64,58 +58,19 @@ updateScroll();
 //   [{ group: "Frontend", skills: [{ name, icon, color, level: 1–5 }, …] }, …]
 // `icon` is a Simple Icons slug (https://simpleicons.org); `level` (or an
 // explicit `size` in px) controls the bubble size — bigger = more expertise.
+// The markup builders live in render.js so the build step can pre-render the
+// same HTML into the static page for crawlers. innerHTML replaces the
+// pre-rendered content with an identical copy — no duplication.
 const bubblesEl = document.getElementById('bubbles');
 if (bubblesEl) {
-  const SIZE_BY_LEVEL = { 1: 46, 2: 56, 3: 68, 4: 82, 5: 98 };
-  const renderBubble = (s) => {
-    const size = s.size ?? SIZE_BY_LEVEL[s.level] ?? 90;
-    const color = s.color ?? '#7c5cff';
-    // Branded tech uses a Simple Icons logo; concept skills (no brand logo)
-    // fall back to a short text badge from `abbr` (or the name's initials).
-    const inner = s.icon
-      ? `<img class="bubble__logo" src="https://cdn.simpleicons.org/${esc(s.icon)}/white" alt="" aria-hidden="true" loading="lazy" />`
-      : `<span class="bubble__abbr">${esc(s.abbr || s.name)}</span>`;
-    return `
-        <div class="bubble" style="--size:${size}px;--c:${color}" tabindex="0" aria-label="${esc(s.name)}">
-          ${inner}
-          <span class="bubble__name">${esc(s.name)}</span>
-        </div>`;
-  };
-  bubblesEl.innerHTML = skills
-    .map(
-      (g) => `
-      <div class="skill-group">
-        <h3 class="skill-group__title">${esc(g.group)}</h3>
-        <div class="bubbles__cloud">${g.skills.map(renderBubble).join('')}</div>
-      </div>`
-    )
-    .join('');
+  bubblesEl.innerHTML = renderBubbles(skills);
 }
 
 // ---------- Project cards (rendered from projects.json) ----------
 // Each project: { tag, title, description, tech: [..], link }
 const projectsEl = document.getElementById('projects-grid');
 if (projectsEl) {
-  projectsEl.innerHTML = projects
-    .map((p) => {
-      const tech = (p.tech || [])
-        .map((t) => `<span>${esc(t)}</span>`)
-        .join('');
-      const link = p.link
-        ? `<a href="${esc(p.link)}" class="card__link"${
-            p.link.startsWith('http') ? ' target="_blank" rel="noopener"' : ''
-          }>View project →</a>`
-        : '';
-      return `
-        <article class="card">
-          ${p.tag ? `<div class="card__tag">${esc(p.tag)}</div>` : ''}
-          <h3>${esc(p.title)}</h3>
-          <p>${esc(p.description)}</p>
-          <div class="card__tech">${tech}</div>
-          ${link}
-        </article>`;
-    })
-    .join('');
+  projectsEl.innerHTML = renderProjects(projects);
 }
 
 // ---------- Spotify player (random track + nav play button) ----------
