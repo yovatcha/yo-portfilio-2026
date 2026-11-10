@@ -178,20 +178,41 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   groups.phone = phone;
 
   // ---------- Desk lamp ----------
+  // Architect lamp: base → elbow → head, each rod spanning two joints so the
+  // pieces stay connected. The shade aims at the spot the lamp light hits.
+  const lampPos = new THREE.Vector3(-1.05, 0.78, -3.1);
+  const lampAim = new THREE.Vector3(-0.2, 0.78, -2.5).sub(lampPos); // lamp-local
   const lamp = new THREE.Group();
+  const rod = (a, b, r, mat) => {
+    const m = cyl(r, r, a.distanceTo(b), mat, 12);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    return m;
+  };
+  const pivot = new THREE.Vector3(0, 0.05, 0);
+  const elbow = new THREE.Vector3(0.1, 0.5, 0);
+  const head = new THREE.Vector3(0.4, 0.58, 0.02);
   lamp.add(at(cyl(0.11, 0.12, 0.03, M.black), 0, 0.015, 0));
-  const arm1 = rbox(0.025, 0.55, 0.025, M.black, 0.01);
-  arm1.rotation.z = -0.25;
-  lamp.add(at(arm1, 0.065, 0.28, 0));
-  const arm2 = rbox(0.025, 0.45, 0.025, M.black, 0.01);
-  arm2.rotation.z = 1.0;
-  lamp.add(at(arm2, 0.3, 0.6, 0));
-  const shade = cyl(0.04, 0.12, 0.16, M.black, 24);
-  shade.rotation.z = 0.5;
-  lamp.add(at(shade, 0.5, 0.66, 0));
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), glow(PALETTE.amber, 1.4));
-  lamp.add(at(bulb, 0.53, 0.6, 0));
-  root.add(at(lamp, -1.05, 0.78, -3.1));
+  lamp.add(rod(pivot, elbow, 0.012, M.black), rod(elbow, head, 0.012, M.black));
+  [pivot, elbow, head].forEach((p) =>
+    lamp.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.022, 16, 12), M.black), p.x, p.y, p.z))
+  );
+  // Shade: open cone, narrow end at the head, wide mouth toward the desk.
+  const aim = lampAim.clone().sub(head).normalize();
+  const shade = new THREE.Group();
+  shade.position.copy(head);
+  shade.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), aim);
+  const coneGeo = new THREE.CylinderGeometry(0.04, 0.11, 0.16, 24, 1, true);
+  shade.add(at(new THREE.Mesh(coneGeo, M.black), 0, -0.1, 0));
+  const inner = glow(PALETTE.amber, 0.5);
+  inner.side = THREE.BackSide;
+  shade.add(at(new THREE.Mesh(coneGeo, inner), 0, -0.1, 0));
+  shade.add(at(cyl(0.045, 0.045, 0.04, M.black, 24), 0, -0.02, 0)); // socket cap
+  shade.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), glow(PALETTE.amber, 1.4)), 0, -0.12, 0));
+  lamp.add(shade);
+  lamp.position.copy(lampPos);
+  root.add(lamp);
+  const lampBulb = aim.clone().multiplyScalar(0.12).add(head).add(lampPos);
 
   // ---------- Chair ----------
   const chair = new THREE.Group();
@@ -408,7 +429,7 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
     turntable: new THREE.PointLight(PALETTE.amber, 1.6, 3, 1.6),
   };
   lights.key.position.set(5, 6, 6);
-  lights.lamp.position.set(-0.5, 1.4, -3.1);
+  lights.lamp.position.copy(lampBulb);
   lights.lamp.target.position.set(-0.2, 0.78, -2.5);
   lights.monitor.position.set(0.4, 1.3, -2.5);
   lights.neon.position.set(0.4, 2.6, -3.0);
