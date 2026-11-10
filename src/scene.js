@@ -4,8 +4,11 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { buildRoom } from './room/build.js';
+import { configureTextures } from './room/materials.js';
 import { createSkillJar } from './room/skillJar.js';
 import { createPicker } from './room/picking.js';
 import { STATIONS, stationIndex, poseAt } from './room/stations.js';
@@ -56,20 +59,25 @@ function detectTier(renderer) {
 export function createScene(canvas, { projects, skills, portraitUrl, onProgress, onReady }) {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    // MSAA lives on the composer's render target instead (see below); the
+    // default framebuffer only needs it when there is no post-processing.
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
   } catch {
     return null;
   }
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const tier = detectTier(renderer);
-  const maxDpr = { high: 2, mid: 1.5, low: 1 }[tier];
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
+  const maxDpr = { high: 1.75, mid: 1.25, low: 1 }[tier];
+  let pixelRatio = Math.min(window.devicePixelRatio, maxDpr);
+  renderer.setPixelRatio(pixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.5;
-  renderer.shadowMap.enabled = tier === 'high';
+  renderer.shadowMap.enabled = tier !== 'low';
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // The room is static: render shadow maps on demand, not every frame.
+  renderer.shadowMap.autoUpdate = false;
   document.documentElement.dataset.tier = tier;
 
   const scene = new THREE.Scene();
@@ -83,11 +91,23 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
   manager.onProgress = (_url, loaded, total) => onProgress?.(loaded / total);
   const portrait = new THREE.TextureLoader(manager).load(portraitUrl);
   portrait.colorSpace = THREE.SRGBColorSpace;
+  configureTextures({
+    manager,
+    anisotropy: Math.min(8, renderer.capabilities.getMaxAnisotropy()),
+    full: tier !== 'low', // low tier: albedo only, no normal/ARM maps
+  });
+
+  // Soft studio reflections for metal, glass and clear-coated surfaces.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  pmrem.dispose();
+  scene.environment = envMap;
+  scene.environmentIntensity = 0.35;
 
   // ---------- Room ----------
   const room = buildRoom({ projects, portrait, reduceMotion });
   scene.add(room.root);
-  const jar = createSkillJar({ skills, anchor: room.jarAnchor, manager });
+  const jar = createSkillJar({ skills, anchor: room.jarAnchor, manager, tier });
   scene.add(jar.group);
   jar.group.userData = { station: 'skills', action: 'shake', label: 'skills.jar · drag the orbs' };
 
@@ -96,12 +116,26 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
     lamp.castShadow = true;
     lamp.shadow.mapSize.set(1024, 1024);
     lamp.shadow.bias = -0.0005;
+
+    // Key light shadow covers the whole diorama.
+    const key = room.lights.key;
+    key.castShadow = true;
+    key.shadow.mapSize.setScalar(tier === 'high' ? 2048 : 1024);
+    Object.assign(key.shadow.camera, { left: -5.5, right: 5.5, top: 5.5, bottom: -5.5, near: 1, far: 22 });
+    key.shadow.normalBias = 0.02;
+    key.shadow.bias = -0.0003;
+
     scene.traverse((o) => {
-      if (o.isMesh && !o.material.transparent) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-      }
+      if (!o.isMesh) return;
+      const m = o.material;
+      // screens and glass light / refract — they shouldn't block light
+      const passive = m.transparent || m.isMeshBasicMaterial || m.transmission > 0 || m.isShaderMaterial;
+      o.castShadow = !passive;
+      o.receiveShadow = !m.isMeshBasicMaterial && !m.isShaderMaterial;
     });
+    const noCast = (obj) => obj.traverse((o) => (o.castShadow = false));
+    jar.group.children.forEach((c) => c.userData.orb && noCast(c));
+    [room.parts.vinyl, room.parts.tonearm, ...room.parts.cones].forEach(noCast);
   }
 
   // Web fonts arrive after first paint — redraw canvas text when they do.
@@ -130,12 +164,29 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
   // ---------- Post-processing ----------
   let composer = null;
   let grainPass = null;
+  let gtaoPass = null;
+  let bloomPass = null;
   if (tier !== 'low') {
-    composer = new EffectComposer(renderer);
+    const target = new THREE.WebGLRenderTarget(1, 1, {
+      type: THREE.HalfFloatType,
+      samples: tier === 'high' ? 4 : 2,
+    });
+    composer = new EffectComposer(renderer, target);
+    composer.setPixelRatio(pixelRatio);
+    composer.setSize(window.innerWidth, window.innerHeight);
     composer.addPass(new RenderPass(scene, camera));
-    composer.addPass(
-      new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2, 0.35, 1.05)
-    );
+    // Ambient occlusion: contact darkening in corners, under the desk, between orbs.
+    // Computed at half resolution — it's soft anyway, and 4x cheaper.
+    if (tier === 'high') {
+      gtaoPass = new GTAOPass(scene, camera, window.innerWidth, window.innerHeight);
+      const fullSetSize = gtaoPass.setSize.bind(gtaoPass);
+      gtaoPass.setSize = (w, h) => fullSetSize(Math.ceil(w / 2), Math.ceil(h / 2));
+      gtaoPass.updateGtaoMaterial({ radius: 0.3, distanceExponent: 1.5, thickness: 1, scale: 1 });
+      gtaoPass.blendIntensity = 0.9;
+      composer.addPass(gtaoPass);
+    }
+    bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2, 0.35, 1.05);
+    composer.addPass(bloomPass);
     composer.addPass(new OutputPass());
     grainPass = new ShaderPass(GrainShader);
     composer.addPass(grainPass);
@@ -229,6 +280,37 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
   }
   window.addEventListener('resize', onResize);
 
+  // ---------- Adaptive quality ----------
+  // Watch the real frame time; if we can't hold ~50fps, shed the most
+  // expensive effect first, one step at a time, and never step back up.
+  const degrade = [
+    () => gtaoPass && (gtaoPass.enabled = false),
+    () => setPixelRatio(Math.min(pixelRatio, 1.25)),
+    () => bloomPass && (bloomPass.enabled = false),
+    () => setPixelRatio(1),
+  ];
+  let avgFrame = 1 / 60;
+  let sampleFrames = 0;
+
+  function setPixelRatio(pr) {
+    if (pr >= pixelRatio) return;
+    pixelRatio = pr;
+    renderer.setPixelRatio(pr);
+    composer?.setPixelRatio(pr);
+    onResize();
+  }
+
+  function watchPerformance(rawDt) {
+    if (frame < 120 || !degrade.length) return; // let loading/compiling settle
+    avgFrame += (rawDt - avgFrame) * 0.05;
+    if (++sampleFrames < 90) return;
+    sampleFrames = 0;
+    if (avgFrame > 1 / 48) {
+      degrade.shift()();
+      avgFrame = 1 / 60;
+    }
+  }
+
   // ---------- Loop ----------
   const clock = new THREE.Clock();
   let clockTime = 0;
@@ -273,10 +355,12 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
 
   function tick() {
     if (!running) return;
-    const dt = Math.min(clock.getDelta(), 0.05);
+    const rawDt = clock.getDelta();
+    const dt = Math.min(rawDt, 0.05);
     clockTime += dt;
     const t = clockTime;
     frame++;
+    watchPerformance(rawDt);
 
     mouse.x += (mouse.tx - mouse.x) * 0.06;
     mouse.y += (mouse.ty - mouse.y) * 0.06;
@@ -305,7 +389,12 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
     if (t < spinUntil) {
       const p = 1 - (spinUntil - t) / 1.2;
       inner.rotation.y = (1 - Math.pow(1 - p, 3)) * Math.PI * 2;
-    } else inner.rotation.y = 0;
+      renderer.shadowMap.needsUpdate = true;
+    } else if (inner.rotation.y !== 0) {
+      inner.rotation.y = 0;
+      renderer.shadowMap.needsUpdate = true;
+    }
+    if (frame < 4) renderer.shadowMap.needsUpdate = true;
 
     // neon: flicker on intro / click, breathe with the beat while playing
     const beat = playing ? Math.pow(Math.max(0, Math.sin(t * Math.PI * 4)), 6) : 0;
@@ -326,8 +415,10 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
     if (composer) composer.render(dt);
     else renderer.render(scene, camera);
 
-    labelRenderer.domElement.classList.toggle('is-visible', station < 0.4);
-    labelRenderer.render(scene, camera);
+    // Object tags only exist on the overview — skip the DOM work elsewhere.
+    const showLabels = station < 0.4;
+    labelRenderer.domElement.classList.toggle('is-visible', showLabels);
+    if (station < 0.8) labelRenderer.render(scene, camera);
 
     if (!readyFired && frame > 2) {
       readyFired = true;
@@ -393,6 +484,7 @@ export function createScene(canvas, { projects, skills, portraitUrl, onProgress,
         }
       });
       composer?.dispose();
+      envMap.dispose();
       renderer.dispose();
     },
   };

@@ -60,32 +60,57 @@ function orbTexture(skill, manager) {
   return texture;
 }
 
-export function createSkillJar({ skills, anchor, manager }) {
+export function createSkillJar({ skills, anchor, manager, tier }) {
   const group = new THREE.Group();
   group.position.copy(anchor);
   const half = new CANNON.Vec3(SIZE.x / 2, SIZE.y / 2, SIZE.z / 2);
 
   // ---------- Glass case ----------
-  const glass = new THREE.Mesh(
-    new THREE.BoxGeometry(SIZE.x, SIZE.y, SIZE.z),
-    new THREE.MeshPhysicalMaterial({
-      color: 0xbfefff,
-      transparent: true,
-      opacity: 0.08,
-      roughness: 0.05,
-      metalness: 0,
-      clearcoat: 1,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    })
-  );
+  // High tier gets real refractive glass; the rest a cheap transparent pane.
+  const glassMat =
+    tier === 'high'
+      ? new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          transmission: 1,
+          thickness: 0.02,
+          ior: 1.5,
+          roughness: 0.03,
+          metalness: 0,
+          specularIntensity: 1,
+          attenuationColor: new THREE.Color(0xd8fff6),
+          attenuationDistance: 2,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          color: 0xdff6ff,
+          transparent: true,
+          opacity: 0.1,
+          roughness: 0.05,
+          metalness: 0,
+          clearcoat: 1,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        });
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(SIZE.x, SIZE.y, SIZE.z), glassMat);
   glass.renderOrder = 2;
   group.add(glass);
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(glass.geometry),
-    new THREE.LineBasicMaterial({ color: 0x4ff3ff, transparent: true, opacity: 0.55 })
+
+  // Brushed-brass frame along the 12 edges of the case.
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a25b, metalness: 1, roughness: 0.3 });
+  const rod = 0.018;
+  const hx = SIZE.x / 2;
+  const hy = SIZE.y / 2;
+  const hz = SIZE.z / 2;
+  [-1, 1].forEach((a) =>
+    [-1, 1].forEach((b) => {
+      const x = new THREE.Mesh(new THREE.BoxGeometry(SIZE.x + rod, rod, rod), brass);
+      x.position.set(0, a * hy, b * hz);
+      const y = new THREE.Mesh(new THREE.BoxGeometry(rod, SIZE.y, rod), brass);
+      y.position.set(a * hx, 0, b * hz);
+      const z = new THREE.Mesh(new THREE.BoxGeometry(rod, rod, SIZE.z), brass);
+      z.position.set(a * hx, b * hy, 0);
+      group.add(x, y, z);
+    })
   );
-  group.add(edges);
   // little brass name plate
   const plate = makeCanvasTexture(256, 64);
   const drawPlate = () => {
@@ -135,13 +160,16 @@ export function createSkillJar({ skills, anchor, manager }) {
     const tex = orbTexture(skill, manager);
     const mesh = new THREE.Mesh(
       new THREE.SphereGeometry(r, 32, 20),
-      new THREE.MeshStandardMaterial({
+      // glossy resin ball with the logo printed on
+      new THREE.MeshPhysicalMaterial({
         map: tex,
         emissiveMap: tex,
         emissive: 0xffffff,
-        emissiveIntensity: 0.18,
-        roughness: 0.3,
-        metalness: 0.1,
+        emissiveIntensity: 0.06,
+        roughness: 0.4,
+        metalness: 0,
+        clearcoat: 1,
+        clearcoatRoughness: 0.08,
       })
     );
     mesh.userData = { orb: true, skill, label: skill.name, station: 'skills' };
@@ -248,7 +276,7 @@ export function createSkillJar({ skills, anchor, manager }) {
         o.mesh.position.copy(o.body.position);
         o.mesh.quaternion.copy(o.body.quaternion);
         if (o.pulse > 0) o.pulse = Math.max(0, o.pulse - dt * 1.5);
-        o.mesh.material.emissiveIntensity = 0.18 + o.pulse * 0.9 + (o === dragging ? 0.35 : 0);
+        o.mesh.material.emissiveIntensity = 0.06 + o.pulse * 0.9 + (o === dragging ? 0.35 : 0);
       });
     },
 

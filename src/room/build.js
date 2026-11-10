@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { PALETTE, clay, glow, makeCanvasTexture } from './materials.js';
+import { PALETTE, clay, coated, pbr, glow, makeCanvasTexture } from './materials.js';
 import { createWindowView } from './windowView.js';
 import {
   createMonitorScreen,
@@ -44,28 +44,22 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   const root = new THREE.Group();
   const groups = {};
 
+  // Scanned PBR surfaces (see src/public/textures/CREDITS.md).
   const M = {
-    wall: clay(PALETTE.wall),
-    wallDark: clay(PALETTE.wallDark),
-    floor: clay(PALETTE.floor, { roughness: 0.7 }),
-    wood: clay(PALETTE.wood),
-    woodLight: clay(PALETTE.woodLight),
-    metal: clay(PALETTE.metal, { metalness: 0.5, roughness: 0.45 }),
-    black: clay(PALETTE.black, { roughness: 0.5 }),
-    cream: clay(PALETTE.cream),
+    wall: pbr('plaster', { repeat: [4, 2], color: 0x77729a }),
+    wallDark: coated(PALETTE.wallDark, { roughness: 0.5, clearcoat: 0.2 }),
+    floor: pbr('floor', { repeat: [4, 3], color: 0xd8ccc4 }),
+    wood: pbr('walnut', { repeat: [2, 1] }),
+    woodLight: pbr('oak', { repeat: [1.5, 1] }),
+    metal: pbr('metal', { metalness: 1, color: 0xb8b8c0 }),
+    black: coated(0x16161c, { roughness: 0.35, clearcoat: 0.4 }),
+    cream: coated(PALETTE.cream, { roughness: 0.55, clearcoat: 0.2 }),
+    fabric: pbr('fabric', { repeat: [1, 1], color: 0x4a4a58 }),
+    pot: pbr('pot', { color: 0xd08a66 }),
   };
 
   // ---------- Shell: floor slab, back wall, window wall ----------
   root.add(at(rbox(9, 0.24, 7, M.floor, 0.04), 0, -0.12, 0));
-  // floor planks: faint stripes for scale
-  for (let i = -4; i <= 4; i += 0.5) {
-    const line = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.008, 7),
-      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 })
-    );
-    line.rotation.x = -Math.PI / 2;
-    root.add(at(line, i, 0.001, 0));
-  }
   root.add(at(rbox(9, 4.2, 0.2, M.wall, 0.03), 0, 2.1, -3.6));
   // skirting board
   root.add(at(rbox(8.8, 0.12, 0.04, M.wallDark), 0.1, 0.06, -3.48));
@@ -84,7 +78,7 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   // Tucked right behind the opening and smaller than the wall, so no edge
   // of the view ever peeks out around or over the wall.
   windowGroup.add(at(view.mesh, -4.95, 2.1, -1.2));
-  const frameMat = clay(0x0e0e16, { roughness: 0.6 });
+  const frameMat = pbr('metal', { metalness: 1, color: 0x5a5a66 });
   windowGroup.add(at(rbox(0.16, 0.08, 2.3, frameMat), -4.48, 2.92, -1.2));
   windowGroup.add(at(rbox(0.3, 0.08, 2.4, M.woodLight), -4.4, 1.27, -1.2)); // sill
   windowGroup.add(at(rbox(0.16, 1.6, 0.06, frameMat), -4.48, 2.1, -2.27));
@@ -93,7 +87,7 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   windowGroup.add(at(rbox(0.1, 0.04, 2.2, frameMat), -4.5, 2.25, -1.2));
   // little cactus on the sill
   const cactus = new THREE.Group();
-  cactus.add(at(cyl(0.07, 0.055, 0.1, clay(0xc96a4a)), 0, 0.05, 0));
+  cactus.add(at(cyl(0.07, 0.055, 0.1, M.pot), 0, 0.05, 0));
   cactus.add(at(new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.08, 4, 12), clay(PALETTE.plant)), 0, 0.15, 0));
   windowGroup.add(at(cactus, -4.4, 1.31, -0.55));
   tag(windowGroup, 'faq', 'rain', 'window · faq', [-4.3, 3.15, -1.2]);
@@ -116,8 +110,9 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   root.add(at(rbox(0.82, 0.025, 0.26, M.black, 0.01), 0.4, 0.795, -2.48));
   root.add(at(rbox(0.07, 0.03, 0.11, M.black, 0.03), 1.0, 0.795, -2.45));
   const mug = new THREE.Group();
-  mug.add(at(cyl(0.05, 0.045, 0.11, clay(PALETTE.neon)), 0, 0.055, 0));
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 8, 16), clay(PALETTE.neon));
+  const ceramic = coated(PALETTE.neon, { roughness: 0.3, clearcoat: 1 });
+  mug.add(at(cyl(0.05, 0.045, 0.11, ceramic), 0, 0.055, 0));
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 8, 16), ceramic);
   handle.rotation.y = Math.PI / 2;
   mug.add(at(handle, 0.055, 0.06, 0));
   root.add(at(mug, -0.15, 0.78, -3.05));
@@ -200,8 +195,8 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
 
   // ---------- Chair ----------
   const chair = new THREE.Group();
-  chair.add(at(rbox(0.6, 0.08, 0.55, M.black, 0.04), 0, 0.5, 0));
-  chair.add(at(rbox(0.56, 0.7, 0.07, M.black, 0.04), 0, 0.9, 0.28));
+  chair.add(at(rbox(0.6, 0.08, 0.55, M.fabric, 0.04), 0, 0.5, 0));
+  chair.add(at(rbox(0.56, 0.7, 0.07, M.fabric, 0.04), 0, 0.9, 0.28));
   chair.add(at(cyl(0.03, 0.03, 0.42, M.metal), 0, 0.25, 0));
   for (let i = 0; i < 5; i++) {
     const leg = rbox(0.35, 0.03, 0.05, M.metal, 0.01);
@@ -215,7 +210,7 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   // rug
   const rug = new THREE.Mesh(
     new THREE.CircleGeometry(1.5, 48),
-    clay(0x3a1630, { roughness: 1 })
+    pbr('fabric', { repeat: [3, 3], color: 0xb0608e, normalScale: 1.5 })
   );
   rug.rotation.x = -Math.PI / 2;
   root.add(at(rug, 0.2, 0.004, -1.1));
@@ -237,7 +232,7 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   music.add(at(rbox(0.62, 0.08, 0.5, M.black, 0.02), 0, 0.04, 0));
   music.add(at(cyl(0.21, 0.21, 0.02, M.metal, 48), -0.06, 0.09, 0));
   const vinyl = new THREE.Group();
-  vinyl.add(cyl(0.2, 0.2, 0.008, clay(0x0a0a0d, { roughness: 0.35 }), 64));
+  vinyl.add(cyl(0.2, 0.2, 0.008, coated(0x0a0a0d, { roughness: 0.25, clearcoat: 1 }), 64));
   const labelTex = makeCanvasTexture(256, 256);
   labelTex.ctx.fillStyle = '#ff3d8b';
   labelTex.ctx.beginPath();
@@ -275,7 +270,7 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
   [-0.65, 0.65].forEach((x) => {
     const spk = new THREE.Group();
     spk.add(at(rbox(0.3, 0.46, 0.3, M.black, 0.03), 0, 0.23, 0));
-    const woofer = cyl(0.1, 0.1, 0.02, clay(0x22222a, { roughness: 0.4 }), 32);
+    const woofer = cyl(0.1, 0.1, 0.02, coated(0x22222a, { roughness: 0.55, clearcoat: 0.3 }), 32);
     woofer.rotation.x = Math.PI / 2;
     spk.add(at(woofer, 0, 0.17, 0.151));
     const tweeter = cyl(0.035, 0.035, 0.02, clay(0x22222a), 24);
@@ -339,9 +334,14 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
 
   // ---------- Plant ----------
   const plant = new THREE.Group();
-  plant.add(at(cyl(0.22, 0.17, 0.42, clay(0xc96a4a)), 0, 0.21, 0));
+  plant.add(at(cyl(0.22, 0.17, 0.42, M.pot), 0, 0.21, 0));
   for (let i = 0; i < 9; i++) {
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), clay(PALETTE.plant));
+    const leafMat = coated(new THREE.Color(PALETTE.plant).offsetHSL((i % 3) * 0.02, 0, (i % 4) * 0.03), {
+      roughness: 0.45,
+      clearcoat: 0.3,
+      side: THREE.DoubleSide,
+    });
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), leafMat);
     leaf.scale.set(0.45, 1.6, 0.18);
     const a = (i / 9) * Math.PI * 2;
     leaf.position.set(Math.cos(a) * 0.12, 0.62 + (i % 3) * 0.08, Math.sin(a) * 0.12);
@@ -397,8 +397,8 @@ export function buildRoom({ projects, portrait, reduceMotion }) {
 
   // ---------- Lights ----------
   const lights = {
-    hemi: new THREE.HemisphereLight(0x9aa0e0, 0x3a2a2a, 2.2),
-    ambient: new THREE.AmbientLight(0xffe8d6, 0.55),
+    hemi: new THREE.HemisphereLight(0x9aa0e0, 0x3a2a2a, 1.1),
+    ambient: new THREE.AmbientLight(0xffe8d6, 0.2),
     // soft warm key from the viewer's side so furniture reads clearly
     key: new THREE.DirectionalLight(0xffd9b8, 1.1),
     lamp: new THREE.SpotLight(PALETTE.amber, 9, 6, 0.95, 0.75, 1.4),

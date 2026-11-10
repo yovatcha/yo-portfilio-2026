@@ -14,7 +14,9 @@
   --cyan: #4ff3ff;
   --amber: #ffb45e;
   --ok: #2fe6a8;
-  --panel: rgba(10, 10, 18, 0.8);
+  /* opaque enough to read without backdrop blur (blur over a live WebGL
+     canvas is re-computed every frame and costs a lot of GPU) */
+  --panel: rgba(10, 10, 18, 0.88);
   --panel-head: rgba(255, 255, 255, 0.035);
   --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.18);
@@ -79,6 +81,7 @@ body.is-grabbing * {
 /* ---------- WebGL canvas + floating object tags ---------- */
 #webgl {
   position: fixed;
+  contain: strict;
   inset: 0;
   width: 100vw;
   height: 100vh;
@@ -677,8 +680,6 @@ kbd {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: clamp(1.4rem, 3vw, 2.2rem);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 .panel[data-title] {
@@ -885,8 +886,6 @@ kbd {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1.3rem 1.4rem;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
   transition: border-color 0.3s ease, transform 0.3s var(--ease-out);
 }
 .card::after {
@@ -985,8 +984,6 @@ kbd {
   border-radius: 99px;
   background: var(--panel);
   border: 1px solid var(--line);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   cursor: default;
   transition: border-color 0.2s ease, transform 0.2s var(--ease-out), background 0.2s ease;
 }
