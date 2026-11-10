@@ -27,7 +27,7 @@ const renderBubble = (s) => {
     ? `<img class="bubble__logo" src="https://cdn.simpleicons.org/${esc(s.icon)}/white" alt="" aria-hidden="true" loading="lazy" />`
     : `<span class="bubble__abbr">${esc(s.abbr || s.name)}</span>`;
   return `
-        <div class="bubble" style="--size:${size}px;--c:${color}" tabindex="0" aria-label="${esc(s.name)}">
+        <div class="bubble" style="--size:${size}px;--c:${color}" tabindex="0" aria-label="${esc(s.name)}" data-skill="${esc(s.name)}">
           ${inner}
           <span class="bubble__name">${esc(s.name)}</span>
         </div>`;
@@ -46,7 +46,7 @@ export const renderBubbles = (skills) =>
 
 export const renderProjects = (projects) =>
   projects
-    .map((p) => {
+    .map((p, i) => {
       const tech = (p.tech || [])
         .map((t) => `<span>${esc(t)}</span>`)
         .join('');
@@ -56,7 +56,7 @@ export const renderProjects = (projects) =>
           }>View project →</a>`
         : '';
       return `
-        <article class="card">
+        <article class="card" data-project="${i}">
           ${p.tag ? `<div class="card__tag">${esc(p.tag)}</div>` : ''}
           <h3>${esc(p.title)}</h3>
           <p>${esc(p.description)}</p>

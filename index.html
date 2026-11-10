@@ -202,7 +202,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Neonderthaw&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -210,11 +210,33 @@
     <!-- The Three.js canvas renders into this fixed full-screen layer -->
     <canvas id="webgl"></canvas>
 
-    <!-- Loading overlay, removed once the scene is ready -->
-    <div id="loader" class="loader">
-      <div class="loader__bar"><span></span></div>
-      <p class="loader__text">Loading Yo's experience…</p>
+    <!-- Loading overlay, removed once the room has rendered -->
+    <div id="loader" class="loader" aria-hidden="true">
+      <div class="loader__term">
+        <p><span class="loader__prompt">chaiyo@bkk</span> ~ % ./enter-room</p>
+        <p class="loader__line">building room ........ <i>ok</i></p>
+        <p class="loader__line">plugging in neon ..... <i>ok</i></p>
+        <p class="loader__line">filling skills.jar ... <span id="loader-pct">0%</span></p>
+        <div class="loader__bar" id="loader-bar"><span></span></div>
+      </div>
     </div>
+
+    <!-- Cursor ring that names objects in the room (fine pointers only) -->
+    <div id="cursor" class="cursor" aria-hidden="true">
+      <span class="cursor__ring"></span>
+      <span class="cursor__label"></span>
+    </div>
+
+    <!-- Station rail: where you are in the room -->
+    <nav class="rail" aria-label="Sections">
+      <a href="#hero"><b>00</b><span>room</span></a>
+      <a href="#about"><b>01</b><span>about</span></a>
+      <a href="#projects"><b>02</b><span>projects</span></a>
+      <a href="#skills"><b>03</b><span>skills</span></a>
+      <a href="#music"><b>04</b><span>music</span></a>
+      <a href="#faq"><b>05</b><span>faq</span></a>
+      <a href="#contact"><b>06</b><span>contact</span></a>
+    </nav>
 
     <!-- Foreground HTML content sits above the canvas -->
     <main id="content">
@@ -236,10 +258,9 @@
                 y2="420"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop offset="0%" stop-color="#FFFFFF" />
-                <stop offset="45%" stop-color="#B98CFF" />
-                <stop offset="75%" stop-color="#5B4BFF" />
-                <stop offset="100%" stop-color="#49E6F5" />
+                <stop offset="0%" style="stop-color: var(--ink)" />
+                <stop offset="55%" style="stop-color: var(--neon)" />
+                <stop offset="100%" style="stop-color: var(--cyan)" />
               </linearGradient>
             </defs>
             <path
@@ -299,14 +320,22 @@
 
       <!-- HERO -->
       <section id="hero" class="section section--hero">
-        <p class="hero__eyebrow">Hello, I'm</p>
+        <p class="hero__eyebrow">02:14 · Bangkok · Hello, I'm</p>
         <h1 class="hero__title">Vatcharamai</h1>
         <p class="hero__subtitle">just call me Chaiyo.</p>
         <p class="hero__lead">
           Working as a Software Developer, with a limitless passion for learning
           and growing every day.
         </p>
-        <a href="#projects" class="btn">View my work</a>
+        <div class="hero__actions">
+          <a href="#projects" class="btn">View my work</a>
+          <a href="#contact" class="btn btn--ghost">Say hello</a>
+        </div>
+        <ul class="hero__howto" aria-hidden="true">
+          <li><kbd>scroll</kbd> walk the room</li>
+          <li><kbd>click</kbd> any object</li>
+          <li><kbd>drag</kbd> the skill orbs</li>
+        </ul>
         <div class="scroll-hint" aria-hidden="true"><span></span>Scroll</div>
       </section>
 
@@ -328,7 +357,7 @@
             />
           </div>
 
-          <div class="panel about__text">
+          <div class="panel about__text" data-title="~/about.md">
             <h2 class="section__title">About Yo</h2>
             <p class="section__lead">
               Hi, I'm <strong>Chaiyo</strong> or <strong>Yo</strong>. A software
@@ -501,6 +530,7 @@
 
       <!-- PROJECTS -->
       <section id="projects" class="section">
+        <p class="section__kicker">02 · on the monitor</p>
         <h2 class="section__title">Projects</h2>
         <!-- Cards are rendered from src/projects.json by main.js -->
         <div class="projects" id="projects-grid"></div>
@@ -508,10 +538,12 @@
 
       <!-- SKILLS -->
       <section id="skills" class="section">
+        <p class="section__kicker">03 · in the jar</p>
         <h2 class="section__title">Skills</h2>
         <p class="section__lead">
-          A cloud of the tech I work with — the bigger the bubble, the more I
-          lean on it. Hover a bubble to see what it is.
+          Everything I work with lives in the jar on the cabinet — the bigger
+          the orb, the more I lean on it. Grab one and throw it, or hover a
+          chip below to make it jump.
         </p>
         <!-- Bubbles are rendered from src/skills.json by main.js -->
         <div class="bubbles" id="bubbles"></div>
@@ -519,13 +551,14 @@
 
       <!-- MUSIC -->
       <section id="music" class="section section--music">
+        <p class="section__kicker">04 · on the turntable</p>
         <h2 class="section__title">Now Playing</h2>
         <p class="section__lead">
           A random pick from my playlists. Reload the page for a different
-          track. Available for spotify user.
+          track — or click the turntable. Full tracks for Spotify users.
         </p>
         <div class="music">
-          <div class="music__player panel">
+          <div class="music__player panel" data-title="spotify.app">
             <!-- Loading placeholder shown until the Spotify player mounts -->
             <div class="music__loading" id="music-loading">
               <span class="music__loading-bars" aria-hidden="true">
@@ -547,6 +580,7 @@
            Helps AI answer engines (ChatGPT, Perplexity, Gemini, AI Overviews)
            lift accurate facts about Chaiyo. Keep answers in sync with the schema. -->
       <section id="faq" class="section section--faq">
+        <p class="section__kicker">05 · out the window</p>
         <h2 class="section__title">FAQ</h2>
         <div class="faq">
           <details class="faq__item panel">
@@ -592,15 +626,15 @@
 
       <!-- CONTACT -->
       <section id="contact" class="section section--contact">
-        <div class="panel panel--center">
+        <div class="panel panel--contact" data-title="~/contact.sh">
           <span class="availability">
             <span class="availability__dot" aria-hidden="true"></span>
             I am still online!
           </span>
-          <h2 class="section__title">My Contact's here</h2>
+          <h2 class="section__title">Say hello</h2>
           <p class="section__lead">
             Have a project in mind, or just want to say hi? My inbox is always
-            open.
+            open — or just tap the phone on my desk.
           </p>
           <div class="contact__actions">
             <a href="mailto:yoyo.rodring@gmail.com" class="btn" id="email-link"

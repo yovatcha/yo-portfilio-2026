@@ -1,23 +1,43 @@
 import './style.css';
 import { createScene } from './scene.js';
+import { createStationTracker } from './room/stations.js';
 import skills from './skills.json';
 import projects from './projects.json';
 import tracks from './tracks.json';
 import { renderBubbles, renderProjects } from './render.js';
 
-// Escape user-provided text before injecting into markup.
-// ---------- Boot the 3D scene ----------
+// ---------- Boot the 3D room ----------
 const canvas = document.getElementById('webgl');
-const experience = createScene(canvas);
+const loader = document.getElementById('loader');
+const loaderPct = document.getElementById('loader-pct');
+const loaderBar = document.getElementById('loader-bar');
 
-// Hide the loader once the first frame is on screen.
-window.addEventListener('load', () => {
-  requestAnimationFrame(() => {
-    const loader = document.getElementById('loader');
-    loader?.classList.add('is-hidden');
-    setTimeout(() => loader?.remove(), 800);
-  });
+const hideLoader = () => {
+  loader?.classList.add('is-hidden');
+  document.documentElement.classList.add('is-ready');
+  setTimeout(() => loader?.remove(), 900);
+};
+
+const experience = createScene(canvas, {
+  projects,
+  skills,
+  portraitUrl: 'images/IMG_6042-Photoroom_1.webp',
+  onProgress(p) {
+    const pct = Math.round(p * 100);
+    if (loaderPct) loaderPct.textContent = `${pct}%`;
+    loaderBar?.style.setProperty('--p', p);
+  },
+  onReady: () => requestAnimationFrame(hideLoader),
 });
+
+// No WebGL: the HTML site stands on its own.
+if (!experience) {
+  document.documentElement.classList.add('no-webgl');
+  canvas?.remove();
+  window.addEventListener('load', hideLoader);
+}
+// Never leave visitors stuck behind the loader (slow CDN logos, etc.).
+setTimeout(hideLoader, 6000);
 
 // ---------- Mobile nav (hamburger toggle) ----------
 const nav = document.querySelector('.nav');
@@ -43,11 +63,20 @@ if (nav && navToggle && navMenu) {
   });
 }
 
-// ---------- Drive the scene from page scroll ----------
+// ---------- Drive the camera from page scroll ----------
+// Each section owns a camera "station" in the room; the progress rail mirrors it.
+const tracker = createStationTracker();
+const railLinks = [...document.querySelectorAll('.rail a')];
+let lastActive = -1;
 function updateScroll() {
-  const max = document.documentElement.scrollHeight - window.innerHeight;
-  const progress = max > 0 ? window.scrollY / max : 0;
-  experience.setScroll(progress);
+  const f = tracker.read();
+  experience?.setStation(f);
+  const active = Math.round(f);
+  if (active !== lastActive) {
+    lastActive = active;
+    railLinks.forEach((a, i) => a.classList.toggle('is-active', i === active));
+    document.documentElement.dataset.station = experience?.stations[active]?.id ?? '';
+  }
 }
 window.addEventListener('scroll', updateScroll, { passive: true });
 window.addEventListener('resize', updateScroll);
@@ -80,6 +109,7 @@ if (projectsEl) {
 // tracks.json as the fallback when the API is unavailable (e.g. `vite dev`).
 // Full playback needs the visitor to be logged into Spotify; otherwise it's a
 // ~30s preview. There is no true autoplay — the first play needs a click.
+let togglePlay = () => {};
 const spotifyMount = document.getElementById('spotify-embed');
 if (spotifyMount) {
   const nowEl = document.getElementById('music-now');
@@ -113,6 +143,7 @@ if (spotifyMount) {
 
   const setPlayingState = (playing) => {
     isPlaying = playing;
+    experience?.setPlaying(playing);
     if (navPlay) {
       navPlay.classList.toggle('is-playing', playing);
       navPlay.setAttribute('aria-pressed', String(playing));
@@ -181,10 +212,8 @@ if (spotifyMount) {
   buildPlayer();
 
   // Nav button: toggle play/pause (starts the first random track if idle).
-  navPlay?.addEventListener('click', () => {
-    if (!controller) return;
-    controller.togglePlay();
-  });
+  togglePlay = () => controller?.togglePlay();
+  navPlay?.addEventListener('click', () => togglePlay());
 
   // Shuffle: load a different random track and play it (user gesture → audio OK).
   document
@@ -210,38 +239,6 @@ const io = new IntersectionObserver(
   { threshold: 0.15 }
 );
 revealTargets.forEach((el) => io.observe(el));
-
-// ---------- About portrait: 3D tilt that follows the cursor ----------
-const aboutPhoto = document.getElementById('aboutPhoto');
-if (aboutPhoto && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  const img = aboutPhoto.querySelector('.about__img');
-  const glow = aboutPhoto.querySelector('.about__glow');
-  const MAX = 16; // max degrees of tilt
-
-  function tilt(e) {
-    const r = aboutPhoto.getBoundingClientRect();
-    // -0.5 … 0.5 relative to the photo's center
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    img.style.setProperty('--ry', `${px * MAX}deg`);
-    img.style.setProperty('--rx', `${-py * MAX}deg`);
-    // Glow drifts opposite the tilt for a parallax depth cue.
-    glow.style.setProperty('--gx', `${-px * 40}px`);
-    glow.style.setProperty('--gy', `${-py * 40}px`);
-  }
-
-  function reset() {
-    img.style.setProperty('--rx', '0deg');
-    img.style.setProperty('--ry', '0deg');
-    glow.style.setProperty('--gx', '0px');
-    glow.style.setProperty('--gy', '0px');
-  }
-
-  // Track across the whole section so the effect feels responsive.
-  const aboutSection = document.getElementById('about');
-  aboutSection.addEventListener('pointermove', tilt);
-  aboutSection.addEventListener('pointerleave', reset);
-}
 
 // ---------- Copy email to clipboard ----------
 // The email lives only on the mailto link, so updating it there keeps the
@@ -285,6 +282,70 @@ if (copyBtn && emailLink) {
       if (label) label.textContent = original;
     }, 1600);
   });
+}
+
+// ---------- Room ↔ page wiring ----------
+if (experience) {
+  // Clicking an object flies to its section; clicking again runs its action.
+  experience.onSelect(({ station, action }) => {
+    if (action === 'go') {
+      document.getElementById(station)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (action === 'toggle-music') {
+      togglePlay();
+    } else if (action === 'copy-email') {
+      copyBtn?.click();
+      experience.flashPhone();
+    }
+  });
+
+  // Hovering a project card puts it on the monitor.
+  projectsEl?.addEventListener('pointerover', (e) => {
+    const card = e.target.closest('[data-project]');
+    if (card) experience.showProject(Number(card.dataset.project));
+  });
+  projectsEl?.addEventListener('focusin', (e) => {
+    const card = e.target.closest('[data-project]');
+    if (card) experience.showProject(Number(card.dataset.project));
+  });
+
+  // Hovering a skill chip makes its orb jump in the jar.
+  const popSkill = (e) => {
+    const b = e.target.closest('[data-skill]');
+    if (b) experience.highlightSkill(b.dataset.skill);
+  };
+  bubblesEl?.addEventListener('mouseover', popSkill);
+  bubblesEl?.addEventListener('focusin', popSkill);
+}
+
+// ---------- Cursor: a ring that follows the pointer and names 3D objects ----------
+const cursor = document.getElementById('cursor');
+if (cursor && experience && window.matchMedia('(pointer: fine)').matches) {
+  const label = cursor.querySelector('.cursor__label');
+  let x = -100;
+  let y = -100;
+  let cx = x;
+  let cy = y;
+  window.addEventListener(
+    'pointermove',
+    (e) => {
+      x = e.clientX;
+      y = e.clientY;
+      cursor.classList.add('is-on');
+    },
+    { passive: true }
+  );
+  document.addEventListener('pointerleave', () => cursor.classList.remove('is-on'));
+  experience.onHover((text) => {
+    cursor.classList.toggle('is-target', !!text);
+    if (text && label) label.textContent = text;
+  });
+  const follow = () => {
+    cx += (x - cx) * 0.25;
+    cy += (y - cy) * 0.25;
+    cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+    requestAnimationFrame(follow);
+  };
+  follow();
 }
 
 // ---------- Footer year ----------
