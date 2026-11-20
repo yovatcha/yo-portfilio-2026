@@ -198,11 +198,11 @@
 
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-    <meta name="theme-color" content="#07080d" />
+    <meta name="theme-color" content="#3d93ee" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Neonderthaw&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..600&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -210,26 +210,40 @@
     <!-- The Three.js canvas renders into this fixed full-screen layer -->
     <canvas id="webgl"></canvas>
 
-    <!-- Loading overlay, removed once the room has rendered -->
+    <!-- Loading overlay, removed once the meadow has rendered -->
     <div id="loader" class="loader" aria-hidden="true">
-      <div class="loader__term">
-        <p><span class="loader__prompt">chaiyo@bkk</span> ~ % ./enter-room</p>
-        <p class="loader__line">building room ........ <i>ok</i></p>
-        <p class="loader__line">plugging in neon ..... <i>ok</i></p>
-        <p class="loader__line">filling skills.jar ... <span id="loader-pct">0%</span></p>
+      <div class="loader__card">
+        <p class="loader__title">Out of office</p>
+        <p class="loader__line">closing fourteen tabs</p>
+        <p class="loader__line">muting notifications</p>
+        <p class="loader__line">stepping outside…</p>
         <div class="loader__bar" id="loader-bar"><span></span></div>
       </div>
     </div>
 
-    <!-- Cursor ring that names objects in the room (fine pointers only) -->
+    <!-- What's left of the working day: the meadow starts out as a wallpaper
+         on a work screen, with notifications piling up. Scrolling walks into
+         the picture and all of this falls away (driven by --escape). -->
+    <div class="remnants" aria-hidden="true">
+      <div class="remnants__bezel"></div>
+      <ul class="remnants__toasts">
+        <li><b>Calendar</b>Stand-up in 5 minutes</li>
+        <li><b>CI</b>Build failed on main</li>
+        <li><b>Inbox</b>14 unread · 3 marked urgent</li>
+        <li><b>Reminder</b>Deadline: today</li>
+      </ul>
+    </div>
+
+    <!-- Cursor ring that names landmarks in the meadow (fine pointers only) -->
     <div id="cursor" class="cursor" aria-hidden="true">
       <span class="cursor__ring"></span>
       <span class="cursor__label"></span>
     </div>
 
-    <!-- Station rail: where you are in the room -->
-    <nav class="rail" aria-label="Sections">
-      <a href="#hero"><b>00</b><span>room</span></a>
+    <!-- The trail: where you are on the path. Zoomed out, these same links
+         become the pins on the map. -->
+    <nav class="rail" aria-label="Stops along the path">
+      <a href="#hero"><b>00</b><span>the desk</span></a>
       <a href="#about"><b>01</b><span>about</span></a>
       <a href="#projects"><b>02</b><span>projects</span></a>
       <a href="#skills"><b>03</b><span>skills</span></a>
@@ -237,6 +251,7 @@
       <a href="#faq"><b>05</b><span>faq</span></a>
       <a href="#contact"><b>06</b><span>contact</span></a>
     </nav>
+    <p class="map-hint" aria-hidden="true">The whole field · pick a stop, or press <kbd>Esc</kbd> to walk on</p>
 
     <!-- Foreground HTML content sits above the canvas -->
     <main id="content">
@@ -259,8 +274,8 @@
                 gradientUnits="userSpaceOnUse"
               >
                 <stop offset="0%" style="stop-color: var(--ink)" />
-                <stop offset="55%" style="stop-color: var(--neon)" />
-                <stop offset="100%" style="stop-color: var(--cyan)" />
+                <stop offset="55%" style="stop-color: var(--leaf)" />
+                <stop offset="100%" style="stop-color: var(--sky)" />
               </linearGradient>
             </defs>
             <path
@@ -298,6 +313,36 @@
           </button>
 
           <button
+            id="nav-map"
+            class="nav__map"
+            type="button"
+            aria-label="Zoom out to the map"
+            aria-pressed="false"
+            title="Zoom out to the map (M)"
+          >
+            <svg class="nav__map-icon nav__map-icon--out" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4Zm0 0v13.5m6-11v13.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <svg class="nav__map-icon nav__map-icon--in" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 21s6.5-5.6 6.5-11A6.5 6.5 0 0 0 5.5 10c0 5.4 6.5 11 6.5 11Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+              <circle cx="12" cy="10" r="2.3" fill="currentColor" />
+            </svg>
+            <span class="nav__map-text">Map</span>
+          </button>
+
+          <button
             id="nav-toggle"
             class="nav__toggle"
             type="button"
@@ -320,21 +365,26 @@
 
       <!-- HERO -->
       <section id="hero" class="section section--hero">
-        <p class="hero__eyebrow">02:14 · Bangkok · Hello, I'm</p>
+        <p class="hero__eyebrow">Out of office · Hello, I'm</p>
         <h1 class="hero__title">Vatcharamai</h1>
         <p class="hero__subtitle">just call me Chaiyo.</p>
         <p class="hero__lead">
           Working as a Software Developer, with a limitless passion for learning
           and growing every day.
         </p>
+        <p class="hero__story">
+          This field is my desktop wallpaper. I have always liked flowers more
+          than deadlines — so when the notifications get loud, I walk into the
+          picture. Come along.
+        </p>
         <div class="hero__actions">
           <a href="#projects" class="btn">View my work</a>
           <a href="#contact" class="btn btn--ghost">Say hello</a>
         </div>
         <ul class="hero__howto" aria-hidden="true">
-          <li><kbd>scroll</kbd> walk the room</li>
-          <li><kbd>click</kbd> any object</li>
-          <li><kbd>drag</kbd> the skill orbs</li>
+          <li><kbd>scroll</kbd> walk the path</li>
+          <li><kbd>click</kbd> anything in bloom</li>
+          <li><kbd>M</kbd> see the whole field</li>
         </ul>
         <div class="scroll-hint" aria-hidden="true"><span></span>Scroll</div>
       </section>
@@ -342,22 +392,20 @@
       <!-- ABOUT -->
       <section id="about" class="section section--about">
         <div class="about__layout">
-          <!-- 3D tilt portrait. The JS in main.js drives the rotation. -->
-          <div class="about__photo" id="aboutPhoto">
-            <div class="about__glow" aria-hidden="true"></div>
-            <div class="about__ring" aria-hidden="true"></div>
-            <img
-              class="about__img"
-              src="images/IMG_6042-Photoroom_1.webp"
-              alt="Portrait of Chaiyo"
-              width="760"
-              height="506"
-              decoding="async"
-              draggable="false"
-            />
-          </div>
-
-          <div class="panel about__text" data-title="~/about.md">
+          <div class="panel about__text">
+            <!-- Cut-out portrait, standing against the sky -->
+            <div class="about__photo" id="aboutPhoto">
+              <img
+                class="about__img"
+                src="images/IMG_6042-Photoroom_1.webp"
+                alt="Portrait of Chaiyo"
+                width="760"
+                height="506"
+                decoding="async"
+                draggable="false"
+              />
+            </div>
+            <p class="section__kicker">01 · on the bench</p>
             <h2 class="section__title">About Yo</h2>
             <p class="section__lead">
               Hi, I'm <strong>Chaiyo</strong> or <strong>Yo</strong>. A software
@@ -530,35 +578,45 @@
 
       <!-- PROJECTS -->
       <section id="projects" class="section">
-        <p class="section__kicker">02 · on the monitor</p>
+        <div class="sheet">
+        <p class="section__kicker">02 · things I planted</p>
         <h2 class="section__title">Projects</h2>
+        <p class="section__lead">
+          The work I ran away from is also the work I am proud of. Each one
+          got a tree out here.
+        </p>
         <!-- Cards are rendered from src/projects.json by main.js -->
         <div class="projects" id="projects-grid"></div>
+        </div>
       </section>
 
       <!-- SKILLS -->
       <section id="skills" class="section">
-        <p class="section__kicker">03 · in the jar</p>
+        <div class="sheet">
+        <p class="section__kicker">03 · the flower bed</p>
         <h2 class="section__title">Skills</h2>
         <p class="section__lead">
-          Everything I work with lives in the jar on the cabinet — the bigger
-          the orb, the more I lean on it. Grab one and throw it, or hover a
-          chip below to make it jump.
+          Everything I work with grows in the bed beside the path — the taller
+          the flower, the more I lean on it. Hover a chip below to make its
+          flower nod, or go and find one yourself.
         </p>
         <!-- Bubbles are rendered from src/skills.json by main.js -->
         <div class="bubbles" id="bubbles"></div>
+        </div>
       </section>
 
       <!-- MUSIC -->
       <section id="music" class="section section--music">
-        <p class="section__kicker">04 · on the turntable</p>
+        <div class="sheet">
+        <p class="section__kicker">04 · field radio</p>
         <h2 class="section__title">Now Playing</h2>
         <p class="section__lead">
           A random pick from my playlists. Reload the page for a different
-          track — or click the turntable. Full tracks for Spotify users.
+          track — or click the radio in the grass. Full tracks for Spotify
+          users.
         </p>
         <div class="music">
-          <div class="music__player panel" data-title="spotify.app">
+          <div class="music__player panel">
             <!-- Loading placeholder shown until the Spotify player mounts -->
             <div class="music__loading" id="music-loading">
               <span class="music__loading-bars" aria-hidden="true">
@@ -574,13 +632,15 @@
             Shuffle track
           </button>
         </div>
+        </div>
       </section>
 
       <!-- FAQ — plain, extractable Q&A that mirrors the FAQPage JSON-LD.
            Helps AI answer engines (ChatGPT, Perplexity, Gemini, AI Overviews)
            lift accurate facts about Chaiyo. Keep answers in sync with the schema. -->
       <section id="faq" class="section section--faq">
-        <p class="section__kicker">05 · out the window</p>
+        <div class="sheet">
+        <p class="section__kicker">05 · at the signpost</p>
         <h2 class="section__title">FAQ</h2>
         <div class="faq">
           <details class="faq__item panel">
@@ -622,19 +682,22 @@
             </p>
           </details>
         </div>
+        </div>
       </section>
 
       <!-- CONTACT -->
       <section id="contact" class="section section--contact">
-        <div class="panel panel--contact" data-title="~/contact.sh">
+        <div class="panel panel--contact">
           <span class="availability">
             <span class="availability__dot" aria-hidden="true"></span>
-            I am still online!
+            Out in the field — I am still online!
           </span>
+          <p class="section__kicker">06 · the last light</p>
           <h2 class="section__title">Say hello</h2>
           <p class="section__lead">
             Have a project in mind, or just want to say hi? My inbox is always
-            open — or just tap the phone on my desk.
+            open — or lift the flag on the mailbox at the end of the path. I
+            walk back to the desk every morning.
           </p>
           <div class="contact__actions">
             <a href="mailto:yoyo.rodring@gmail.com" class="btn" id="email-link"
@@ -690,7 +753,7 @@
             </a>
             <a
               class="dock__item"
-              style="--c: #ffffff"
+              style="--c: #24292f"
               href="https://github.com/yovatcha"
               target="_blank"
               rel="noopener"

@@ -1,42 +1,40 @@
 import './style.css';
 import { createScene } from './scene.js';
-import { createStationTracker } from './room/stations.js';
+import { createStationTracker } from './meadow/stations.js';
 import skills from './skills.json';
 import projects from './projects.json';
 import tracks from './tracks.json';
 import { renderBubbles, renderProjects } from './render.js';
 
-// ---------- Boot the 3D room ----------
+const root = document.documentElement;
+
+// ---------- Boot the 3D meadow ----------
 const canvas = document.getElementById('webgl');
 const loader = document.getElementById('loader');
-const loaderPct = document.getElementById('loader-pct');
 const loaderBar = document.getElementById('loader-bar');
 
 const hideLoader = () => {
   loader?.classList.add('is-hidden');
-  document.documentElement.classList.add('is-ready');
+  root.classList.add('is-ready');
   setTimeout(() => loader?.remove(), 900);
 };
 
 const experience = createScene(canvas, {
   projects,
   skills,
-  portraitUrl: 'images/IMG_6042-Photoroom_1.webp',
-  onProgress(p) {
-    const pct = Math.round(p * 100);
-    if (loaderPct) loaderPct.textContent = `${pct}%`;
-    loaderBar?.style.setProperty('--p', p);
-  },
+  // The meadow is procedural — there is nothing to download, so the bar just
+  // fills once the field has been built.
+  onProgress: (p) => loaderBar?.style.setProperty('--p', p),
   onReady: () => requestAnimationFrame(hideLoader),
 });
 
 // No WebGL: the HTML site stands on its own.
 if (!experience) {
-  document.documentElement.classList.add('no-webgl');
+  root.classList.add('no-webgl');
   canvas?.remove();
   window.addEventListener('load', hideLoader);
 }
-// Never leave visitors stuck behind the loader (slow CDN logos, etc.).
+// Never leave visitors stuck behind the loader.
 setTimeout(hideLoader, 6000);
 
 // ---------- Mobile nav (hamburger toggle) ----------
@@ -63,30 +61,49 @@ if (nav && navToggle && navMenu) {
   });
 }
 
-// ---------- Drive the camera from page scroll ----------
-// Each section owns a camera "station" in the room; the progress rail mirrors it.
+// ---------- Walk the path from page scroll ----------
+// Each section owns a stop on the path; the trail on the right mirrors it.
+// The browser's theme colour follows the time of day at each stop.
+const THEME = {
+  hero: '#3d93ee',
+  about: '#3d93ee',
+  projects: '#4a94e2',
+  skills: '#5a93d6',
+  music: '#e9b877',
+  faq: '#f0a878',
+  contact: '#f29a72',
+};
+const themeMeta = document.querySelector('meta[name="theme-color"]');
 const tracker = createStationTracker();
 const railLinks = [...document.querySelectorAll('.rail a')];
 let lastActive = -1;
 function updateScroll() {
   const f = tracker.read();
   experience?.setStation(f);
+  // The work screen around the hero dissolves over the first part of the scroll.
+  root.style.setProperty('--escape', Math.min(1, window.scrollY / (window.innerHeight * 0.45)).toFixed(3));
   const active = Math.round(f);
   if (active !== lastActive) {
     lastActive = active;
-    railLinks.forEach((a, i) => a.classList.toggle('is-active', i === active));
-    document.documentElement.dataset.station = experience?.stations[active]?.id ?? '';
+    railLinks.forEach((a, i) => {
+      a.classList.toggle('is-active', i === active);
+      if (i === active) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    });
+    const id = railLinks[active]?.getAttribute('href').slice(1) ?? '';
+    root.dataset.station = id;
+    if (experience && THEME[id]) themeMeta?.setAttribute('content', THEME[id]);
   }
 }
 window.addEventListener('scroll', updateScroll, { passive: true });
 window.addEventListener('resize', updateScroll);
 updateScroll();
 
-// ---------- Skill bubbles (rendered from skills.json) ----------
+// ---------- Skill chips (rendered from skills.json) ----------
 // skills.json is grouped by domain so a visitor can see where the lean is:
 //   [{ group: "Frontend", skills: [{ name, icon, color, level: 1–5 }, …] }, …]
-// `icon` is a Simple Icons slug (https://simpleicons.org); `level` (or an
-// explicit `size` in px) controls the bubble size — bigger = more expertise.
+// `icon` is a Simple Icons slug (https://simpleicons.org); `level` sets how
+// tall that skill's flower grows in the bed.
 // The markup builders live in render.js so the build step can pre-render the
 // same HTML into the static page for crawlers. innerHTML replaces the
 // pre-rendered content with an identical copy — no duplication.
@@ -118,7 +135,6 @@ if (spotifyMount) {
   let pool = tracks.map((t) => ({ id: t.id, type: t.type || 'track' }));
   let lastIndex = -1;
   let controller = null;
-  let isPlaying = false;
 
   // Loading state: active until the Spotify player has mounted.
   const setLoading = (loading) => {
@@ -142,7 +158,6 @@ if (spotifyMount) {
   };
 
   const setPlayingState = (playing) => {
-    isPlaying = playing;
     experience?.setPlaying(playing);
     if (navPlay) {
       navPlay.classList.toggle('is-playing', playing);
@@ -222,9 +237,7 @@ if (spotifyMount) {
 }
 
 // ---------- Scroll-reveal animations for content ----------
-const revealTargets = document.querySelectorAll(
-  '.panel, .card, .bubbles, .section__title'
-);
+const revealTargets = document.querySelectorAll('.sheet, .panel, .card');
 revealTargets.forEach((el) => el.classList.add('reveal'));
 
 const io = new IntersectionObserver(
@@ -236,7 +249,7 @@ const io = new IntersectionObserver(
       }
     });
   },
-  { threshold: 0.15 }
+  { threshold: 0.08 }
 );
 revealTargets.forEach((el) => io.observe(el));
 
@@ -284,40 +297,132 @@ if (copyBtn && emailLink) {
   });
 }
 
-// ---------- Room ↔ page wiring ----------
+// ---------- Meadow ↔ page wiring ----------
+const jumpTo = (id, behavior = 'smooth') =>
+  document.getElementById(id)?.scrollIntoView({ behavior, block: 'start' });
+
 if (experience) {
-  // Clicking an object flies to its section; clicking again runs its action.
-  experience.onSelect(({ station, action }) => {
+  const chipOf = (name) =>
+    [...(bubblesEl?.querySelectorAll('[data-skill]') ?? [])].find((b) => b.dataset.skill === name);
+
+  // Clicking a landmark walks to its section; clicking again runs its action.
+  experience.onSelect(({ station, action, project, skill }) => {
     if (action === 'go') {
-      document.getElementById(station)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      jumpTo(station);
     } else if (action === 'toggle-music') {
       togglePlay();
     } else if (action === 'copy-email') {
       copyBtn?.click();
-      experience.flashPhone();
+      experience.flashContact();
+    } else if (action === 'project') {
+      const card = projectsEl?.querySelector(`[data-project="${project}"]`);
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card?.classList.add('is-lit');
+      setTimeout(() => card?.classList.remove('is-lit'), 1600);
+    } else if (action === 'skill') {
+      chipOf(skill)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });
 
-  // Hovering a project card puts it on the monitor.
-  projectsEl?.addEventListener('pointerover', (e) => {
+  // Hovering a project card shakes its blossom tree.
+  const showProject = (e) => {
     const card = e.target.closest('[data-project]');
     if (card) experience.showProject(Number(card.dataset.project));
-  });
-  projectsEl?.addEventListener('focusin', (e) => {
-    const card = e.target.closest('[data-project]');
-    if (card) experience.showProject(Number(card.dataset.project));
-  });
+  };
+  projectsEl?.addEventListener('pointerover', showProject);
+  projectsEl?.addEventListener('focusin', showProject);
 
-  // Hovering a skill chip makes its orb jump in the jar.
+  // Hovering a skill chip makes its flower nod — and the other way round.
   const popSkill = (e) => {
     const b = e.target.closest('[data-skill]');
     if (b) experience.highlightSkill(b.dataset.skill);
   };
   bubblesEl?.addEventListener('mouseover', popSkill);
   bubblesEl?.addEventListener('focusin', popSkill);
+  let litChip = null;
+  experience.onSkillHover((name) => {
+    litChip?.classList.remove('is-lit');
+    litChip = name ? chipOf(name) : null;
+    litChip?.classList.add('is-lit');
+  });
 }
 
-// ---------- Cursor: a ring that follows the pointer and names 3D objects ----------
+// ---------- Zoom out: the whole field as a map ----------
+// The trail's seven links double as the map's pins: while the map is open the
+// scene reports each stop's screen position and the links are laid over them.
+const mapBtn = document.getElementById('nav-map');
+if (experience && mapBtn) {
+  const sections = [...document.querySelectorAll('.section')];
+  let mapOpen = false;
+
+  const setMap = (open, { focus = true } = {}) => {
+    if (open === mapOpen) return;
+    mapOpen = open;
+    root.classList.toggle('is-map', open);
+    sections.forEach((s) => (s.inert = open));
+    mapBtn.setAttribute('aria-pressed', String(open));
+    mapBtn.setAttribute('aria-label', open ? 'Zoom back in' : 'Zoom out to the map');
+    mapBtn.title = open ? 'Zoom back in (Esc)' : 'Zoom out to the map (M)';
+    experience.setMap(open);
+    if (!focus) return;
+    if (open) railLinks[lastActive]?.focus({ preventScroll: true });
+    else mapBtn.focus({ preventScroll: true });
+  };
+
+  experience.onMapFrame((pins, amount) => {
+    if (amount < 0.5) return;
+    pins.forEach((p, i) => {
+      if (railLinks[i]) railLinks[i].style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0)`;
+    });
+  });
+
+  mapBtn.addEventListener('click', () => setMap(!mapOpen));
+
+  // On the map, any in-page link drops you at that stop and zooms back in.
+  document.addEventListener('click', (e) => {
+    if (!mapOpen) return;
+    const link = e.target.closest?.('a[href^="#"]');
+    if (!link) return;
+    e.preventDefault();
+    const id = link.getAttribute('href').slice(1);
+    jumpTo(id, 'instant');
+    history.replaceState(null, '', `#${id}`);
+    updateScroll();
+    experience.snapStation();
+    setMap(false, { focus: false });
+    const heading = document.querySelector(`#${CSS.escape(id)} h1, #${CSS.escape(id)} h2`);
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // Don't steal keys from anything being typed into (incl. the chat widget).
+    const el = e.composedPath()[0];
+    if (el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+    if (e.key === 'Escape' && mapOpen) setMap(false);
+    else if (e.key.toLowerCase() === 'm') setMap(!mapOpen);
+  });
+
+  // Scrolling or swiping on the map means "take me back in".
+  window.addEventListener('wheel', (e) => mapOpen && Math.abs(e.deltaY) > 4 && !e.ctrlKey && setMap(false, { focus: false }), { passive: true });
+  let touchY = null;
+  window.addEventListener('touchstart', (e) => (touchY = mapOpen ? e.touches[0].clientY : null), { passive: true });
+  window.addEventListener(
+    'touchmove',
+    (e) => {
+      if (touchY != null && Math.abs(e.touches[0].clientY - touchY) > 60) {
+        touchY = null;
+        setMap(false, { focus: false });
+      }
+    },
+    { passive: true }
+  );
+}
+
+// ---------- Cursor: a ring that follows the pointer and names landmarks ----------
 const cursor = document.getElementById('cursor');
 if (cursor && experience && window.matchMedia('(pointer: fine)').matches) {
   const label = cursor.querySelector('.cursor__label');

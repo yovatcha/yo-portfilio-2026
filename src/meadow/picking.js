@@ -1,22 +1,20 @@
 import * as THREE from 'three';
 
-// Anything the visitor can read or click in the HTML layer wins over the room.
+// Anything the visitor can read or click in the HTML layer wins over the meadow.
 const UI_SELECTOR =
-  'a, button, input, textarea, select, summary, iframe, .panel, .card, .bubble, .nav, .rail, .dock, .faq__item';
+  'a, button, input, textarea, select, summary, iframe, .sheet, .panel, .card, .bubble, .nav, .rail, .dock, .faq__item';
 
 /**
- * Pointer → room interaction. The canvas sits *behind* the HTML, so we listen
+ * Pointer → meadow interaction. The canvas sits *behind* the HTML, so we listen
  * on window and raycast only when the pointer isn't over real UI.
  *
- * Emits: hover(root|null), press(hit) → return true to start a drag,
- * drag(raycaster), release(), click(root, hit).
+ * Emits: hover(root|null), click(root, hit).
  */
 export function createPicker({ camera, getTargets, handlers }) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2(-10, -10);
   let dirty = false;
   let down = null;
-  let dragging = false;
   let hovered = null;
 
   const toNdc = (e) => {
@@ -24,7 +22,7 @@ export function createPicker({ camera, getTargets, handlers }) {
     raycaster.setFromCamera(ndc, camera);
   };
 
-  // Walk up to the tagged interactive root (a station group or an orb).
+  // Walk up to the tagged interactive root (a landmark group or a skill flower).
   const rootOf = (obj) => {
     let o = obj;
     while (o) {
@@ -47,10 +45,6 @@ export function createPicker({ camera, getTargets, handlers }) {
 
   function onMove(e) {
     toNdc(e);
-    if (dragging) {
-      handlers.drag(raycaster);
-      return;
-    }
     if (overUi(e)) {
       ndc.set(-10, -10);
     }
@@ -60,46 +54,25 @@ export function createPicker({ camera, getTargets, handlers }) {
   function onDown(e) {
     if (e.button !== 0 || overUi(e)) return;
     toNdc(e);
-    const hit = pick();
-    down = { x: e.clientX, y: e.clientY, hit };
-    if (hit && handlers.press(hit)) {
-      dragging = true;
-      document.body.classList.add('is-grabbing');
-    }
+    down = { x: e.clientX, y: e.clientY, hit: pick() };
   }
 
   function onUp(e) {
     if (!down) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
-    if (dragging) {
-      dragging = false;
-      document.body.classList.remove('is-grabbing');
-      handlers.release();
-    }
     if (moved < 6 && down.hit) handlers.click(down.hit.root, down.hit);
     down = null;
-  }
-
-  // On touch, grabbing an orb must not scroll the page.
-  function onTouchStart(e) {
-    if (overUi(e) || e.touches.length !== 1) return;
-    const t = e.touches[0];
-    toNdc(t);
-    const hit = pick();
-    if (hit?.root.userData.orb) e.preventDefault();
   }
 
   window.addEventListener('pointermove', onMove, { passive: true });
   window.addEventListener('pointerdown', onDown);
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
-  window.addEventListener('touchstart', onTouchStart, { passive: false });
 
   return {
-    ndc,
     // Called once per frame; raycasts only when the pointer moved.
     update(force = false) {
-      if (dragging || (!dirty && !force)) return hovered;
+      if (!dirty && !force) return hovered;
       dirty = false;
       if (ndc.x < -2) {
         if (hovered) handlers.hover((hovered = null));
@@ -110,15 +83,15 @@ export function createPicker({ camera, getTargets, handlers }) {
       if (root !== hovered) handlers.hover((hovered = root));
       return hovered;
     },
-    get dragging() {
-      return dragging;
+    /** Drop the hover (e.g. while the map is open). */
+    clear() {
+      if (hovered) handlers.hover((hovered = null));
     },
     dispose() {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
-      window.removeEventListener('touchstart', onTouchStart);
     },
   };
 }
