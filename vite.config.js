@@ -1,23 +1,24 @@
 import { defineConfig } from 'vite';
 import projects from './src/projects.json';
 import skills from './src/skills.json';
-import { renderProjects, renderBubbles } from './src/render.js';
+import { renderProjects, renderSkills } from './src/render.js';
 
 // GEO / SEO: bake the JS-rendered projects & skills into the static HTML so AI
 // answer engines and no-JS crawlers can read them. main.js re-renders the same
 // markup at runtime (innerHTML), so users see no difference.
+const SLOTS = [
+  ['<div class="plates" id="projects-grid"></div>', () => `<div class="plates" id="projects-grid">${renderProjects(projects)}</div>`],
+  ['<div class="skills" id="skills-grid"></div>', () => `<div class="skills" id="skills-grid">${renderSkills(skills)}</div>`],
+];
+
 const prerenderContent = () => ({
   name: 'prerender-content',
   transformIndexHtml(html) {
-    return html
-      .replace(
-        '<div class="projects" id="projects-grid"></div>',
-        `<div class="projects" id="projects-grid">${renderProjects(projects)}</div>`
-      )
-      .replace(
-        '<div class="bubbles" id="bubbles"></div>',
-        `<div class="bubbles" id="bubbles">${renderBubbles(skills)}</div>`
-      );
+    return SLOTS.reduce((out, [slot, fill]) => {
+      // Fail loudly: a renamed placeholder would otherwise silently ship empty sections to crawlers.
+      if (!out.includes(slot)) throw new Error(`prerender-content: placeholder not found in index.html: ${slot}`);
+      return out.replace(slot, fill);
+    }, html);
   },
 });
 

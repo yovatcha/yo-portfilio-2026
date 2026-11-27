@@ -198,74 +198,35 @@
 
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-    <meta name="theme-color" content="#07080d" />
+    <meta name="theme-color" content="#102e46" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Neonderthaw&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <!-- The Three.js canvas renders into this fixed full-screen layer -->
-    <canvas id="webgl"></canvas>
+    <!-- The halftone garden renders into this fixed full-screen layer (src/art/) -->
+    <canvas id="garden" aria-hidden="true"></canvas>
 
-    <!-- Loading overlay, removed once the room has rendered -->
-    <div id="loader" class="loader" aria-hidden="true">
-      <div class="loader__term">
-        <p><span class="loader__prompt">chaiyo@bkk</span> ~ % ./enter-room</p>
-        <p class="loader__line">building room ........ <i>ok</i></p>
-        <p class="loader__line">plugging in neon ..... <i>ok</i></p>
-        <p class="loader__line">filling skills.jar ... <span id="loader-pct">0%</span></p>
-        <div class="loader__bar" id="loader-bar"><span></span></div>
-      </div>
-    </div>
-
-    <!-- Cursor ring that names objects in the room (fine pointers only) -->
-    <div id="cursor" class="cursor" aria-hidden="true">
-      <span class="cursor__ring"></span>
-      <span class="cursor__label"></span>
-    </div>
-
-    <!-- Station rail: where you are in the room -->
-    <nav class="rail" aria-label="Sections">
-      <a href="#hero"><b>00</b><span>room</span></a>
-      <a href="#about"><b>01</b><span>about</span></a>
-      <a href="#projects"><b>02</b><span>projects</span></a>
-      <a href="#skills"><b>03</b><span>skills</span></a>
-      <a href="#music"><b>04</b><span>music</span></a>
-      <a href="#faq"><b>05</b><span>faq</span></a>
-      <a href="#contact"><b>06</b><span>contact</span></a>
-    </nav>
+    <!-- Liquid glass (src/art/glass.js): SVG filters used as backdrop-filters -->
+    <svg class="glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="liquid-glass" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="92" result="noise" />
+        <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+        <feDisplacementMap in="SourceGraphic" in2="soft" scale="38" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
 
     <!-- Foreground HTML content sits above the canvas -->
     <main id="content">
       <nav class="nav">
         <a href="#hero" class="nav__brand">
-          <svg
-            class="nav__logo"
-            viewBox="0 0 512 512"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient
-                id="navY"
-                x1="120"
-                y1="80"
-                x2="400"
-                y2="420"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" style="stop-color: var(--ink)" />
-                <stop offset="55%" style="stop-color: var(--neon)" />
-                <stop offset="100%" style="stop-color: var(--cyan)" />
-              </linearGradient>
-            </defs>
+          <svg class="nav__logo" viewBox="0 0 512 512" aria-hidden="true">
             <path
               d="M160 120 C170 120 180 125 188 135 L256 230 L324 135 C332 125 342 120 352 120 L385 120 L286 260 C280 268 277 277 277 287 L277 400 C277 420 261 436 241 436 L220 436 L220 287 C220 277 217 268 211 260 L127 140 C119 129 127 120 139 120 Z"
-              fill="url(#navY)"
+              fill="currentColor"
             />
           </svg>
           <span>CHAIYO</span>
@@ -279,18 +240,10 @@
             aria-pressed="false"
             title="Play music"
           >
-            <svg
-              class="nav__play-icon nav__play-icon--play"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
+            <svg class="nav__play-icon nav__play-icon--play" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M8 5v14l11-7z" fill="currentColor" />
             </svg>
-            <svg
-              class="nav__play-icon nav__play-icon--pause"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
+            <svg class="nav__play-icon nav__play-icon--pause" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 5h4v14H6zm8 0h4v14h-4z" fill="currentColor" />
             </svg>
             <span class="nav__play-spinner" aria-hidden="true"></span>
@@ -318,114 +271,150 @@
         </div>
       </nav>
 
-      <!-- HERO -->
-      <section id="hero" class="section section--hero">
-        <p class="hero__eyebrow">02:14 · Bangkok · Hello, I'm</p>
-        <h1 class="hero__title">Vatcharamai</h1>
-        <p class="hero__subtitle">just call me Chaiyo.</p>
-        <p class="hero__lead">
-          Working as a Software Developer, with a limitless passion for learning
-          and growing every day.
-        </p>
-        <div class="hero__actions">
-          <a href="#projects" class="btn">View my work</a>
-          <a href="#contact" class="btn btn--ghost">Say hello</a>
+      <!-- HERO — the print itself. Everything that isn't a control is plantable. -->
+      <section id="hero" class="hero">
+        <div class="hero__stage">
+          <p class="hero__caption">
+            <span>Plate 00 — A garden, printed</span>
+            <span class="hero__edition">Edition <b id="edition">№ ······</b></span>
+          </p>
+
+          <div class="hero__copy">
+            <p class="hero__eyebrow">Bangkok · Hello, I'm</p>
+            <h1 class="hero__title">Vatcharamai</h1>
+            <p class="hero__subtitle">just call me Chaiyo<i aria-hidden="true">.</i></p>
+            <p class="hero__lead">
+              Working as a Software Developer, with a limitless passion for
+              learning and growing every day.
+            </p>
+            <div class="hero__actions">
+              <a href="#projects" class="btn">View my work</a>
+              <a href="#contact" class="btn btn--ghost">Say hello</a>
+            </div>
+          </div>
+
+          <!-- Garden controls: hidden when the canvas can't run -->
+          <div class="hero__garden">
+            <p class="hero__hint" aria-hidden="true">
+              <span class="hero__hint-fine"><kbd>click</kbd> plant a flower <kbd>drag</kbd> grow a vine</span>
+              <span class="hero__hint-coarse"><kbd>tap</kbd> anywhere to plant a flower</span>
+            </p>
+            <div class="hero__tools">
+              <button id="replant" class="tool" type="button">Replant</button>
+              <button id="keep-print" class="tool" type="button">Keep this print</button>
+            </div>
+          </div>
         </div>
-        <ul class="hero__howto" aria-hidden="true">
-          <li><kbd>scroll</kbd> walk the room</li>
-          <li><kbd>click</kbd> any object</li>
-          <li><kbd>drag</kbd> the skill orbs</li>
-        </ul>
         <div class="scroll-hint" aria-hidden="true"><span></span>Scroll</div>
       </section>
 
       <!-- ABOUT -->
-      <section id="about" class="section section--about">
-        <div class="about__layout">
-          <!-- 3D tilt portrait. The JS in main.js drives the rotation. -->
-          <div class="about__photo" id="aboutPhoto">
-            <div class="about__glow" aria-hidden="true"></div>
-            <div class="about__ring" aria-hidden="true"></div>
-            <img
-              class="about__img"
-              src="images/IMG_6042-Photoroom_1.webp"
-              alt="Portrait of Chaiyo"
-              width="760"
-              height="506"
-              decoding="async"
-              draggable="false"
-            />
-          </div>
+      <section id="about" class="section">
+        <div class="wrap">
+          <header class="section__head">
+            <p class="section__kicker">01 — About</p>
+            <h2 class="section__title" data-parallax="0.06">About Yo</h2>
+          </header>
 
-          <div class="panel about__text" data-title="~/about.md">
-            <h2 class="section__title">About Yo</h2>
-            <p class="section__lead">
-              Hi, I'm <strong>Chaiyo</strong> or <strong>Yo</strong>. A software
-              developer who turns ideas into clean, fast, and delightful
-              experiences on the web and application.
-            </p>
-            <p>
-              I'm driven by a limitless passion for learning and growing every
-              day — solving real problems with thoughtful code and building
-              things that feel polished from the first pixel to the last.
-            </p>
-            <p>
-              In short: <strong>Vatcharamai Rodring (Chaiyo)</strong> is a
-              software developer based in Bangkok, Thailand, working at ODT since
-              January 2025. He specialises in React, Next.js, TypeScript,
-              Node.js, and Three.js, and has shipped large-scale production
-              platforms including Gig&amp;Co, the Blocktrade trading system, and
-              a real-time Thailand election-results platform for Daily News.
-            </p>
+          <div class="about">
+            <figure class="about__portrait" data-parallax="0.05">
+              <div class="about__frame">
+                <img
+                  class="about__img"
+                  src="images/IMG_6042-Photoroom_1.webp"
+                  alt="Portrait of Chaiyo"
+                  width="760"
+                  height="506"
+                  decoding="async"
+                  draggable="false"
+                />
+              </div>
+              <figcaption>
+                <span>Fig. 01 — Chaiyo, Bangkok</span>
+                <span class="about__hint" aria-hidden="true">
+                  <span class="about__hint-fine"><kbd>click</kbd> the print to burn it</span>
+                  <span class="about__hint-coarse"><kbd>tap</kbd> the print to burn it</span>
+                </span>
+                <button class="about__reprint tool" type="button">Reprint</button>
+              </figcaption>
+            </figure>
 
-            <ul class="about__facts">
-              <li>
-                <span class="about__facts-label">Name</span>
-                <span class="about__facts-value">Vatcharamai Rodring</span>
-              </li>
-              <li>
-                <span class="about__facts-label">Nickname</span>
-                <span class="about__facts-value">Chaiyo</span>
-              </li>
-              <li>
-                <span class="about__facts-label">Born</span>
-                <span class="about__facts-value">21 Sep 2002</span>
-              </li>
-              <li>
-                <span class="about__facts-label">Role</span>
-                <span class="about__facts-value">Software Developer</span>
-              </li>
-            </ul>
-          </div>
-        </div>
+            <div class="about__text">
+              <p class="section__lead">
+                Hi, I'm <strong>Chaiyo</strong> or <strong>Yo</strong>. A software
+                developer who turns ideas into clean, fast, and delightful
+                experiences on the web and application.
+              </p>
+              <p>
+                I'm driven by a limitless passion for learning and growing every
+                day — solving real problems with thoughtful code and building
+                things that feel polished from the first pixel to the last.
+              </p>
+              <p>
+                In short: <strong>Vatcharamai Rodring (Chaiyo)</strong> is a
+                software developer based in Bangkok, Thailand, working at ODT since
+                January 2025. He specialises in React, Next.js, TypeScript,
+                Node.js, and Three.js, and has shipped large-scale production
+                platforms including Gig&amp;Co, the Blocktrade trading system, and
+                a real-time Thailand election-results platform for Daily News.
+              </p>
 
-        <!-- Experience + Education -->
-        <div class="timeline-grid">
-          <!-- Work Experience -->
-          <div class="timeline" aria-label="Work experience">
-            <h3 class="timeline__title">Work Experience</h3>
-            <div class="timeline__track">
-              <span class="timeline__line" aria-hidden="true"></span>
-
-              <article class="timeline__item">
-                <span
-                  class="timeline__node timeline__node--current"
-                  aria-hidden="true"
-                ></span>
-                <div class="timeline__card timeline__card--current panel">
-                  <img
-                    class="timeline__logo"
-                    src="images/workingplace/odt-website.webp"
-                    alt="ODT logo"
-                    width="60"
-                    height="60"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span class="timeline__badge">
-                    <span class="timeline__badge-dot" aria-hidden="true"></span>
-                    Jan 2025 — Present
+              <ul class="about__facts" aria-label="Quick facts — flip a card for a fun fact">
+                <li class="fact" tabindex="0" role="button" aria-pressed="false">
+                  <span class="fact__face">
+                    <span class="about__facts-label">Name</span>
+                    <span class="about__facts-value">Vatcharamai Rodring</span>
                   </span>
+                  <span class="fact__face fact__face--back">
+                    <span class="about__facts-label">Friends call me</span>
+                    <span class="about__facts-value">Yo</span>
+                  </span>
+                </li>
+                <li class="fact" tabindex="0" role="button" aria-pressed="false">
+                  <span class="fact__face">
+                    <span class="about__facts-label">Nickname</span>
+                    <span class="about__facts-value">Chaiyo</span>
+                  </span>
+                  <span class="fact__face fact__face--back">
+                    <span class="about__facts-label">Thai, ไชโย</span>
+                    <span class="about__facts-value">“Hooray!”</span>
+                  </span>
+                </li>
+                <li class="fact" tabindex="0" role="button" aria-pressed="false">
+                  <span class="fact__face">
+                    <span class="about__facts-label">Born</span>
+                    <span class="about__facts-value">21 Sep 2002</span>
+                  </span>
+                  <span class="fact__face fact__face--back">
+                    <span class="about__facts-label">Days on Earth</span>
+                    <span class="about__facts-value"><span data-days>8,000+</span></span>
+                  </span>
+                </li>
+                <li class="fact" tabindex="0" role="button" aria-pressed="false">
+                  <span class="fact__face">
+                    <span class="about__facts-label">Role</span>
+                    <span class="about__facts-value">Software Developer</span>
+                  </span>
+                  <span class="fact__face fact__face--back">
+                    <span class="about__facts-label">At ODT since</span>
+                    <span class="about__facts-value">Jan 2025</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Experience + Education -->
+          <div class="timeline-grid">
+            <div class="timeline" aria-label="Work experience">
+              <h3 class="timeline__title">Work Experience</h3>
+
+              <article class="timeline__item timeline__item--current">
+                <p class="timeline__when">
+                  <span class="timeline__dot" aria-hidden="true"></span>
+                  Jan 2025 — Present
+                </p>
+                <div class="timeline__body">
                   <h4 class="timeline__role">Software Developer</h4>
                   <p class="timeline__place">ODT · Full-time</p>
                   <p class="timeline__desc">
@@ -436,21 +425,20 @@
                     collaborative agile cycles.
                   </p>
                 </div>
+                <img
+                  class="timeline__logo"
+                  src="images/workingplace/odt-website.webp"
+                  alt="ODT logo"
+                  width="60"
+                  height="60"
+                  loading="lazy"
+                  decoding="async"
+                />
               </article>
 
               <article class="timeline__item">
-                <span class="timeline__node" aria-hidden="true"></span>
-                <div class="timeline__card panel">
-                  <img
-                    class="timeline__logo"
-                    src="images/workingplace/devforward.webp"
-                    alt="DevForward.tech logo"
-                    width="60"
-                    height="60"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span class="timeline__year">June — August 2024</span>
+                <p class="timeline__when">June — August 2024</p>
+                <div class="timeline__body">
                   <h4 class="timeline__role">Full-stack Developer</h4>
                   <p class="timeline__place">DevForward.tech · Internship</p>
                   <p class="timeline__desc">
@@ -461,29 +449,24 @@
                     reliability.
                   </p>
                 </div>
+                <img
+                  class="timeline__logo"
+                  src="images/workingplace/devforward.webp"
+                  alt="DevForward.tech logo"
+                  width="60"
+                  height="60"
+                  loading="lazy"
+                  decoding="async"
+                />
               </article>
             </div>
-          </div>
 
-          <!-- Education -->
-          <div class="timeline" aria-label="Education">
-            <h3 class="timeline__title">Education</h3>
-            <div class="timeline__track">
-              <span class="timeline__line" aria-hidden="true"></span>
+            <div class="timeline" aria-label="Education">
+              <h3 class="timeline__title">Education</h3>
 
               <article class="timeline__item">
-                <span class="timeline__node" aria-hidden="true"></span>
-                <div class="timeline__card panel">
-                  <img
-                    class="timeline__logo"
-                    src="images/workingplace/kmutt.webp"
-                    alt="King Mongkut's University of Technology Thonburi logo"
-                    width="60"
-                    height="60"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span class="timeline__year">2021 — 2024</span>
+                <p class="timeline__when">2021 — 2024</p>
+                <div class="timeline__body">
                   <h4 class="timeline__role">B.Sc. Computer Science</h4>
                   <p class="timeline__place">
                     King Mongkut's University of Technology Thonburi
@@ -496,21 +479,20 @@
                     Thesis.
                   </p>
                 </div>
+                <img
+                  class="timeline__logo"
+                  src="images/workingplace/kmutt.webp"
+                  alt="King Mongkut's University of Technology Thonburi logo"
+                  width="60"
+                  height="60"
+                  loading="lazy"
+                  decoding="async"
+                />
               </article>
 
               <article class="timeline__item">
-                <span class="timeline__node" aria-hidden="true"></span>
-                <div class="timeline__card panel">
-                  <img
-                    class="timeline__logo"
-                    src="images/workingplace/satitpsm.webp"
-                    alt="Satit Prasarnmit Demonstration School logo"
-                    width="60"
-                    height="60"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span class="timeline__year">2018 — 2020</span>
+                <p class="timeline__when">2018 — 2020</p>
+                <div class="timeline__body">
                   <h4 class="timeline__role">Senior High School</h4>
                   <p class="timeline__place">
                     Satit Prasarnmit Demonstration School (secondary) · Computer
@@ -522,6 +504,15 @@
                     things.
                   </p>
                 </div>
+                <img
+                  class="timeline__logo"
+                  src="images/workingplace/satitpsm.webp"
+                  alt="Satit Prasarnmit Demonstration School logo"
+                  width="60"
+                  height="60"
+                  loading="lazy"
+                  decoding="async"
+                />
               </article>
             </div>
           </div>
@@ -529,50 +520,62 @@
       </section>
 
       <!-- PROJECTS -->
-      <section id="projects" class="section">
-        <p class="section__kicker">02 · on the monitor</p>
-        <h2 class="section__title">Projects</h2>
-        <!-- Cards are rendered from src/projects.json by main.js -->
-        <div class="projects" id="projects-grid"></div>
+      <section id="projects" class="section section--bleed">
+        <div class="wrap">
+          <header class="section__head">
+            <p class="section__kicker">02 — Selected work</p>
+            <h2 class="section__title" data-parallax="0.06">Projects</h2>
+          </header>
+        </div>
+        <!-- Plates are rendered from src/projects.json by main.js -->
+        <div class="plates" id="projects-grid"></div>
       </section>
 
       <!-- SKILLS -->
       <section id="skills" class="section">
-        <p class="section__kicker">03 · in the jar</p>
-        <h2 class="section__title">Skills</h2>
-        <p class="section__lead">
-          Everything I work with lives in the jar on the cabinet — the bigger
-          the orb, the more I lean on it. Grab one and throw it, or hover a
-          chip below to make it jump.
-        </p>
-        <!-- Bubbles are rendered from src/skills.json by main.js -->
-        <div class="bubbles" id="bubbles"></div>
+        <div class="wrap">
+          <header class="section__head">
+            <p class="section__kicker">03 — Toolkit</p>
+            <h2 class="section__title" data-parallax="0.06">Skills</h2>
+          </header>
+          <p class="section__lead">
+            Everything I work with, pressed like flowers. The more petals a
+            flower has, the more I lean on it.
+          </p>
+          <!-- Chips are rendered from src/skills.json by main.js -->
+          <div class="skills" id="skills-grid"></div>
+        </div>
       </section>
 
       <!-- MUSIC -->
       <section id="music" class="section section--music">
-        <p class="section__kicker">04 · on the turntable</p>
-        <h2 class="section__title">Now Playing</h2>
-        <p class="section__lead">
-          A random pick from my playlists. Reload the page for a different
-          track — or click the turntable. Full tracks for Spotify users.
-        </p>
-        <div class="music">
-          <div class="music__player panel" data-title="spotify.app">
-            <!-- Loading placeholder shown until the Spotify player mounts -->
-            <div class="music__loading" id="music-loading">
-              <span class="music__loading-bars" aria-hidden="true">
-                <i></i><i></i><i></i><i></i><i></i>
-              </span>
-              <span>Loading player…</span>
+        <div class="wrap">
+          <header class="section__head">
+            <p class="section__kicker">04 — On repeat</p>
+            <h2 class="section__title" data-parallax="0.06">Now Playing</h2>
+          </header>
+          <div class="music">
+            <p class="section__lead">
+              A random pick from my playlists. Reload the page for a different
+              track — or shuffle. The garden sways along while it plays. Full
+              tracks for Spotify users.
+            </p>
+            <div class="music__card">
+              <!-- Loading placeholder shown until the Spotify player mounts -->
+              <div class="music__loading" id="music-loading">
+                <span class="music__loading-bars" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i>
+                </span>
+                <span>Loading player…</span>
+              </div>
+              <!-- Spotify IFrame API mounts the player here (main.js) -->
+              <div id="spotify-embed"></div>
+              <div class="music__foot">
+                <p class="music__now" id="music-now" aria-live="polite"></p>
+                <button id="music-shuffle" class="tool" type="button">Shuffle track</button>
+              </div>
             </div>
-            <!-- Spotify IFrame API mounts the player here (main.js) -->
-            <div id="spotify-embed"></div>
           </div>
-          <p class="music__now" id="music-now" aria-live="polite"></p>
-          <button id="music-shuffle" class="btn music__shuffle" type="button">
-            Shuffle track
-          </button>
         </div>
       </section>
 
@@ -580,151 +583,179 @@
            Helps AI answer engines (ChatGPT, Perplexity, Gemini, AI Overviews)
            lift accurate facts about Chaiyo. Keep answers in sync with the schema. -->
       <section id="faq" class="section section--faq">
-        <p class="section__kicker">05 · out the window</p>
-        <h2 class="section__title">FAQ</h2>
-        <div class="faq">
-          <details class="faq__item panel">
-            <summary class="faq__q">Who is Vatcharamai Rodring (Chaiyo)?</summary>
-            <p class="faq__a">
-              Vatcharamai Rodring — nicknamed Chaiyo or Yo — is a software
-              developer based in Bangkok, Thailand. He builds web and application
-              experiences and has shipped large-scale production platforms in
-              fintech, workforce, and media. He has worked at ODT since January
-              2025.
-            </p>
-          </details>
-          <details class="faq__item panel">
-            <summary class="faq__q">What technologies does Chaiyo work with?</summary>
-            <p class="faq__a">
-              Chaiyo specialises in React, Next.js, TypeScript, JavaScript,
-              Node.js, and Three.js on the front end, with backend and data work
-              in Go, Python, FastAPI, PostgreSQL, and Prisma, plus Flutter,
-              Docker, and Figma.
-            </p>
-          </details>
-          <details class="faq__item panel">
-            <summary class="faq__q">What has Chaiyo built?</summary>
-            <p class="faq__a">
-              His work includes Gig&amp;Co (a workforce marketplace platform),
-              Blocktrade (a block-trading platform for the Thai capital markets),
-              a real-time Thailand election-results platform for Daily News, the
-              KKP Tax Planner, and LostNFound (an NLP-based campus lost-and-found
-              platform built as his university thesis).
-            </p>
-          </details>
-          <details class="faq__item panel">
-            <summary class="faq__q">How can I contact Chaiyo?</summary>
-            <p class="faq__a">
-              You can reach Vatcharamai Rodring by email at
-              <a href="mailto:yoyo.rodring@gmail.com">yoyo.rodring@gmail.com</a>,
-              or via GitHub (github.com/yovatcha) and LinkedIn
-              (linkedin.com/in/vatcharamai-rodring).
-            </p>
-          </details>
+        <div class="wrap">
+          <header class="section__head">
+            <p class="section__kicker">05 — Asked often</p>
+            <h2 class="section__title" data-parallax="0.06">FAQ</h2>
+          </header>
+          <div class="faq" data-faq>
+            <article class="faq-card" data-tone="navy">
+              <button class="faq-card__q" type="button" aria-expanded="false">
+                <span class="faq-card__num" aria-hidden="true">01</span>
+                <span class="faq-card__title">Who is Vatcharamai Rodring (Chaiyo)?</span>
+              </button>
+              <button class="faq-card__close" type="button" aria-label="Close answer" hidden>×</button>
+              <div class="faq-card__a">
+                <p>
+                  Vatcharamai Rodring — nicknamed Chaiyo or Yo — is a software
+                  developer based in Bangkok, Thailand. He builds web and application
+                  experiences and has shipped large-scale production platforms in
+                  fintech, workforce, and media. He has worked at ODT since January
+                  2025.
+                </p>
+              </div>
+            </article>
+            <article class="faq-card" data-tone="blue">
+              <button class="faq-card__q" type="button" aria-expanded="false">
+                <span class="faq-card__num" aria-hidden="true">02</span>
+                <span class="faq-card__title">What technologies does Chaiyo work with?</span>
+              </button>
+              <button class="faq-card__close" type="button" aria-label="Close answer" hidden>×</button>
+              <div class="faq-card__a">
+                <p>
+                  Chaiyo specialises in React, Next.js, TypeScript, JavaScript,
+                  Node.js, and Three.js on the front end, with backend and data work
+                  in Go, Python, FastAPI, PostgreSQL, and Prisma, plus Flutter,
+                  Docker, and Figma.
+                </p>
+              </div>
+            </article>
+            <article class="faq-card" data-tone="red">
+              <button class="faq-card__q" type="button" aria-expanded="false">
+                <span class="faq-card__num" aria-hidden="true">03</span>
+                <span class="faq-card__title">What has Chaiyo built?</span>
+              </button>
+              <button class="faq-card__close" type="button" aria-label="Close answer" hidden>×</button>
+              <div class="faq-card__a">
+                <p>
+                  His work includes Gig&amp;Co (a workforce marketplace platform),
+                  Blocktrade (a block-trading platform for the Thai capital markets),
+                  a real-time Thailand election-results platform for Daily News, the
+                  KKP Tax Planner, and LostNFound (an NLP-based campus lost-and-found
+                  platform built as his university thesis).
+                </p>
+              </div>
+            </article>
+            <article class="faq-card" data-tone="cream">
+              <button class="faq-card__q" type="button" aria-expanded="false">
+                <span class="faq-card__num" aria-hidden="true">04</span>
+                <span class="faq-card__title">How can I contact Chaiyo?</span>
+              </button>
+              <button class="faq-card__close" type="button" aria-label="Close answer" hidden>×</button>
+              <div class="faq-card__a">
+                <p>
+                  You can reach Vatcharamai Rodring by email at
+                  <a href="mailto:yoyo.rodring@gmail.com">yoyo.rodring@gmail.com</a>,
+                  or via GitHub (github.com/yovatcha) and LinkedIn
+                  (linkedin.com/in/vatcharamai-rodring).
+                </p>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
       <!-- CONTACT -->
       <section id="contact" class="section section--contact">
-        <div class="panel panel--contact" data-title="~/contact.sh">
-          <span class="availability">
-            <span class="availability__dot" aria-hidden="true"></span>
-            I am still online!
-          </span>
-          <h2 class="section__title">Say hello</h2>
-          <p class="section__lead">
-            Have a project in mind, or just want to say hi? My inbox is always
-            open — or just tap the phone on my desk.
-          </p>
-          <div class="contact__actions">
-            <a href="mailto:yoyo.rodring@gmail.com" class="btn" id="email-link"
-              >Say hello</a
-            >
-            <a
-              href="Vatcharamai_resume2024.pdf"
-              class="btn btn--ghost"
-              download="Vatcharamai-Rodring-CV.pdf"
-              >Download CV</a
-            >
-            <button
-              type="button"
-              class="btn btn--ghost"
-              id="copy-email"
-              aria-label="Copy email address"
-            >
-              <span class="copy-email__label">Copy email</span>
-            </button>
+        <div class="wrap">
+          <div class="contact">
+            <p class="section__kicker">06 — Contact</p>
+            <span class="availability">
+              <span class="availability__dot" aria-hidden="true"></span>
+              I am still online!
+            </span>
+            <h2 class="section__title contact__title">Say hello</h2>
+            <p class="section__lead">
+              Have a project in mind, or just want to say hi? My inbox is always
+              open.
+            </p>
+            <div class="contact__actions">
+              <a href="mailto:yoyo.rodring@gmail.com" class="btn" id="email-link"
+                >Say hello</a
+              >
+              <a
+                href="Vatcharamai_resume2024.pdf"
+                class="btn btn--ghost"
+                download="Vatcharamai-Rodring-CV.pdf"
+                >Download CV</a
+              >
+              <button
+                type="button"
+                class="btn btn--ghost"
+                id="copy-email"
+                aria-label="Copy email address"
+              >
+                <span class="copy-email__label">Copy email</span>
+              </button>
+            </div>
+            <nav class="dock" aria-label="Social links">
+              <a
+                class="dock__item"
+                href="https://www.facebook.com/vatcharamai.rodring/"
+                target="_blank"
+                rel="noopener"
+                aria-label="Facebook"
+              >
+                <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"
+                  />
+                </svg>
+                <span class="dock__label">Facebook</span>
+              </a>
+              <a
+                class="dock__item"
+                href="https://www.instagram.com/yovatcha/"
+                target="_blank"
+                rel="noopener"
+                aria-label="Instagram"
+              >
+                <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0Zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03Zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162ZM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4Zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439Z"
+                  />
+                </svg>
+                <span class="dock__label">Instagram</span>
+              </a>
+              <a
+                class="dock__item"
+                href="https://github.com/yovatcha"
+                target="_blank"
+                rel="noopener"
+                aria-label="GitHub"
+              >
+                <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                  />
+                </svg>
+                <span class="dock__label">GitHub</span>
+              </a>
+              <a
+                class="dock__item"
+                href="https://www.linkedin.com/in/vatcharamai-rodring/"
+                target="_blank"
+                rel="noopener"
+                aria-label="LinkedIn"
+              >
+                <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+                  />
+                </svg>
+                <span class="dock__label">LinkedIn</span>
+              </a>
+            </nav>
           </div>
-          <nav class="dock" aria-label="Social links">
-            <a
-              class="dock__item"
-              style="--c: #1877f2"
-              href="https://www.facebook.com/vatcharamai.rodring/"
-              target="_blank"
-              rel="noopener"
-              aria-label="Facebook"
-            >
-              <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"
-                />
-              </svg>
-              <span class="dock__label">Facebook</span>
-            </a>
-            <a
-              class="dock__item"
-              style="--c: #e4405f"
-              href="https://www.instagram.com/yovatcha/"
-              target="_blank"
-              rel="noopener"
-              aria-label="Instagram"
-            >
-              <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0Zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03Zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162ZM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4Zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439Z"
-                />
-              </svg>
-              <span class="dock__label">Instagram</span>
-            </a>
-            <a
-              class="dock__item"
-              style="--c: #ffffff"
-              href="https://github.com/yovatcha"
-              target="_blank"
-              rel="noopener"
-              aria-label="GitHub"
-            >
-              <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-                />
-              </svg>
-              <span class="dock__label">GitHub</span>
-            </a>
-            <a
-              class="dock__item"
-              style="--c: #0a66c2"
-              href="https://www.linkedin.com/in/vatcharamai-rodring/"
-              target="_blank"
-              rel="noopener"
-              aria-label="LinkedIn"
-            >
-              <svg class="dock__icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
-                />
-              </svg>
-              <span class="dock__label">LinkedIn</span>
-            </a>
-          </nav>
+          <footer class="footer">
+            <span>© <span id="year"></span> Vatcharamai</span>
+            <span>Grown in WebGL, printed in halftone</span>
+          </footer>
         </div>
-        <footer class="footer">
-          © <span id="year"></span> Vatcharamai — Built with Three.js
-        </footer>
       </section>
     </main>
 

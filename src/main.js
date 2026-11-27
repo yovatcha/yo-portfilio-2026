@@ -1,43 +1,114 @@
 import './style.css';
-import { createScene } from './scene.js';
-import { createStationTracker } from './room/stations.js';
+import { createGarden } from './art/garden.js';
+import { createBurnPortrait } from './art/burn.js';
+import { createGlassTiles } from './art/glass.js';
+import { createFaqDeck } from './art/deck.js';
+import { seedFromUrl, randomSeed, formatSeed } from './art/seed.js';
 import skills from './skills.json';
 import projects from './projects.json';
 import tracks from './tracks.json';
-import { renderBubbles, renderProjects } from './render.js';
+import { renderSkills, renderProjects } from './render.js';
 
-// ---------- Boot the 3D room ----------
-const canvas = document.getElementById('webgl');
-const loader = document.getElementById('loader');
-const loaderPct = document.getElementById('loader-pct');
-const loaderBar = document.getElementById('loader-bar');
+const root = document.documentElement;
+root.classList.add('js'); // lets the CSS pin the nav only when scripts can restyle it
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer = (e) => e.pointerType === 'mouse' || e.pointerType === 'pen';
 
-const hideLoader = () => {
-  loader?.classList.add('is-hidden');
-  document.documentElement.classList.add('is-ready');
-  setTimeout(() => loader?.remove(), 900);
+// ---------- Grow the garden ----------
+// `html.has-garden` lets the CSS drop its plain navy hero once the canvas has
+// painted; without WebGL (`html.no-webgl`) that fallback simply stays.
+const canvas = document.getElementById('garden');
+const hero = document.getElementById('hero');
+const garden =
+  canvas &&
+  createGarden(canvas, {
+    seed: seedFromUrl() ?? randomSeed(),
+    hero,
+    root: document.getElementById('content'),
+    reduceMotion,
+    onReady: () => root.classList.add('has-garden'),
+  });
+
+if (!garden) {
+  root.classList.add('no-webgl');
+  canvas?.remove();
+}
+
+// ---------- Hero: edition number, replant, keep the print ----------
+const editionEl = document.getElementById('edition');
+const showEdition = () => {
+  if (editionEl && garden) editionEl.textContent = `№ ${formatSeed(garden.seed)}`;
 };
+showEdition();
 
-const experience = createScene(canvas, {
-  projects,
-  skills,
-  portraitUrl: 'images/IMG_6042-Photoroom_1.webp',
-  onProgress(p) {
-    const pct = Math.round(p * 100);
-    if (loaderPct) loaderPct.textContent = `${pct}%`;
-    loaderBar?.style.setProperty('--p', p);
-  },
-  onReady: () => requestAnimationFrame(hideLoader),
+document.getElementById('replant')?.addEventListener('click', () => {
+  garden?.replant();
+  showEdition();
 });
 
-// No WebGL: the HTML site stands on its own.
-if (!experience) {
-  document.documentElement.classList.add('no-webgl');
-  canvas?.remove();
-  window.addEventListener('load', hideLoader);
+const keepBtn = document.getElementById('keep-print');
+keepBtn?.addEventListener('click', async () => {
+  if (!garden) return;
+  const blob = await garden.savePoster({ credit: 'Vatcharamai Rodring · chaiyoyo.com' });
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `garden-${formatSeed(garden.seed)}.png`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+});
+
+// ---------- Scroll: the print gives way to paper ----------
+// The garden needs to know where the hero ends on screen; the nav switches
+// from cream-on-navy to navy-on-cream once the paper reaches it.
+// Parallax rides along: the garden's layers lift at their own pace, the hero
+// copy sinks as it goes (`--hero-p`, 0→1), and any `[data-parallax="speed"]`
+// element drifts by `--py` relative to the middle of the screen.
+const drifters = reduceMotion ? [] : [...document.querySelectorAll('[data-parallax]')];
+const onScreen = new Set();
+const drift = new Map(); // el → current offset, so measuring ignores our own nudge
+if (drifters.length) {
+  const seen = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => (e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target)));
+      requestScroll();
+    },
+    { rootMargin: '20% 0px' }
+  );
+  drifters.forEach((el) => seen.observe(el));
 }
-// Never leave visitors stuck behind the loader (slow CDN logos, etc.).
-setTimeout(hideLoader, 6000);
+
+function updateScroll() {
+  scrollQueued = false;
+  if (hero) {
+    const box = hero.getBoundingClientRect();
+    garden?.setPaper(box.bottom);
+    garden?.setScroll(window.scrollY);
+    root.classList.toggle('is-paper', box.bottom < 72);
+    if (!reduceMotion) {
+      const p = Math.min(1, Math.max(0, -box.top / box.height));
+      hero.style.setProperty('--hero-p', p.toFixed(4));
+    }
+  }
+  const mid = window.innerHeight / 2;
+  for (const el of onScreen) {
+    const box = el.getBoundingClientRect();
+    const was = drift.get(el) ?? 0;
+    const offset = (box.top - was + box.height / 2 - mid) * -(Number(el.dataset.parallax) || 0);
+    drift.set(el, offset);
+    el.style.setProperty('--py', `${offset.toFixed(1)}px`);
+  }
+}
+let scrollQueued = false;
+function requestScroll() {
+  if (scrollQueued) return;
+  scrollQueued = true;
+  requestAnimationFrame(updateScroll);
+}
+window.addEventListener('scroll', requestScroll, { passive: true });
+window.addEventListener('resize', requestScroll);
+updateScroll();
 
 // ---------- Mobile nav (hamburger toggle) ----------
 const nav = document.querySelector('.nav');
@@ -63,39 +134,19 @@ if (nav && navToggle && navMenu) {
   });
 }
 
-// ---------- Drive the camera from page scroll ----------
-// Each section owns a camera "station" in the room; the progress rail mirrors it.
-const tracker = createStationTracker();
-const railLinks = [...document.querySelectorAll('.rail a')];
-let lastActive = -1;
-function updateScroll() {
-  const f = tracker.read();
-  experience?.setStation(f);
-  const active = Math.round(f);
-  if (active !== lastActive) {
-    lastActive = active;
-    railLinks.forEach((a, i) => a.classList.toggle('is-active', i === active));
-    document.documentElement.dataset.station = experience?.stations[active]?.id ?? '';
-  }
-}
-window.addEventListener('scroll', updateScroll, { passive: true });
-window.addEventListener('resize', updateScroll);
-updateScroll();
-
-// ---------- Skill bubbles (rendered from skills.json) ----------
+// ---------- Skill chips (rendered from skills.json) ----------
 // skills.json is grouped by domain so a visitor can see where the lean is:
-//   [{ group: "Frontend", skills: [{ name, icon, color, level: 1–5 }, …] }, …]
-// `icon` is a Simple Icons slug (https://simpleicons.org); `level` (or an
-// explicit `size` in px) controls the bubble size — bigger = more expertise.
+//   [{ group: "Frontend", skills: [{ name, level: 1–5, … }, …] }, …]
+// `level` is how many of a chip's five petals are inked.
 // The markup builders live in render.js so the build step can pre-render the
 // same HTML into the static page for crawlers. innerHTML replaces the
 // pre-rendered content with an identical copy — no duplication.
-const bubblesEl = document.getElementById('bubbles');
-if (bubblesEl) {
-  bubblesEl.innerHTML = renderBubbles(skills);
+const skillsEl = document.getElementById('skills-grid');
+if (skillsEl) {
+  skillsEl.innerHTML = renderSkills(skills);
 }
 
-// ---------- Project cards (rendered from projects.json) ----------
+// ---------- Project plates (rendered from projects.json) ----------
 // Each project: { tag, title, description, tech: [..], link }
 const projectsEl = document.getElementById('projects-grid');
 if (projectsEl) {
@@ -109,7 +160,6 @@ if (projectsEl) {
 // tracks.json as the fallback when the API is unavailable (e.g. `vite dev`).
 // Full playback needs the visitor to be logged into Spotify; otherwise it's a
 // ~30s preview. There is no true autoplay — the first play needs a click.
-let togglePlay = () => {};
 const spotifyMount = document.getElementById('spotify-embed');
 if (spotifyMount) {
   const nowEl = document.getElementById('music-now');
@@ -118,7 +168,6 @@ if (spotifyMount) {
   let pool = tracks.map((t) => ({ id: t.id, type: t.type || 'track' }));
   let lastIndex = -1;
   let controller = null;
-  let isPlaying = false;
 
   // Loading state: active until the Spotify player has mounted.
   const setLoading = (loading) => {
@@ -138,12 +187,11 @@ if (spotifyMount) {
   };
 
   const setNow = (t) => {
-    if (nowEl) nowEl.textContent = t?.name ? `🎵 ${t.name} — ${t.artist}` : '';
+    if (nowEl) nowEl.textContent = t?.name ? `${t.name} — ${t.artist}` : '';
   };
 
   const setPlayingState = (playing) => {
-    isPlaying = playing;
-    experience?.setPlaying(playing);
+    garden?.setPlaying(playing); // the flowers sway to it
     if (navPlay) {
       navPlay.classList.toggle('is-playing', playing);
       navPlay.setAttribute('aria-pressed', String(playing));
@@ -212,8 +260,7 @@ if (spotifyMount) {
   buildPlayer();
 
   // Nav button: toggle play/pause (starts the first random track if idle).
-  togglePlay = () => controller?.togglePlay();
-  navPlay?.addEventListener('click', () => togglePlay());
+  navPlay?.addEventListener('click', () => controller?.togglePlay());
 
   // Shuffle: load a different random track and play it (user gesture → audio OK).
   document
@@ -221,9 +268,33 @@ if (spotifyMount) {
     ?.addEventListener('click', () => loadRandomTrack(true));
 }
 
+// ---------- About: burn the print to reveal the photo ----------
+// Skipped without WebGL (the plain photo just stays).
+const portraitFrame = document.querySelector('.about__frame');
+const portraitImg = portraitFrame?.querySelector('.about__img');
+const portrait =
+  garden &&
+  portraitImg &&
+  createBurnPortrait(portraitFrame, {
+    img: portraitImg,
+    reduceMotion,
+    onReprint: () => portraitFrame.focus({ preventScroll: true }),
+  });
+if (portrait) {
+  document.querySelector('.about__reprint')?.addEventListener('click', () => portrait.reprint());
+}
+
+// ---------- About: liquid-glass fact tiles that flip ----------
+const factList = document.querySelector('.about__facts');
+if (factList) createGlassTiles(factList, { reduceMotion });
+
+// ---------- FAQ: a fanned deck of cards ----------
+const faqDeck = document.querySelector('[data-faq]');
+if (faqDeck) createFaqDeck(faqDeck, { reduceMotion });
+
 // ---------- Scroll-reveal animations for content ----------
 const revealTargets = document.querySelectorAll(
-  '.panel, .card, .bubbles, .section__title'
+  '.section__head, .section > .wrap > .section__lead, .about__portrait, .about__text, .timeline__title, .timeline__item, .plate, .skill-group, .music, .faq, .contact'
 );
 revealTargets.forEach((el) => el.classList.add('reveal'));
 
@@ -236,7 +307,7 @@ const io = new IntersectionObserver(
       }
     });
   },
-  { threshold: 0.15 }
+  { threshold: 0.12 }
 );
 revealTargets.forEach((el) => io.observe(el));
 
@@ -276,6 +347,9 @@ if (copyBtn && emailLink) {
     await copyText(email);
     copyBtn.classList.add('is-copied');
     if (label) label.textContent = 'Copied!';
+    // A puff of red petals from the button.
+    const box = copyBtn.getBoundingClientRect();
+    garden?.burst(box.left + box.width / 2, box.top + box.height / 2);
     clearTimeout(resetId);
     resetId = setTimeout(() => {
       copyBtn.classList.remove('is-copied');
@@ -284,68 +358,51 @@ if (copyBtn && emailLink) {
   });
 }
 
-// ---------- Room ↔ page wiring ----------
-if (experience) {
-  // Clicking an object flies to its section; clicking again runs its action.
-  experience.onSelect(({ station, action }) => {
-    if (action === 'go') {
-      document.getElementById(station)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (action === 'toggle-music') {
-      togglePlay();
-    } else if (action === 'copy-email') {
-      copyBtn?.click();
-      experience.flashPhone();
-    }
-  });
-
-  // Hovering a project card puts it on the monitor.
+// ---------- Garden ↔ page wiring ----------
+if (garden) {
+  // A project plate under the pointer (or holding focus) is printed back in
+  // full ink by the canvas, and a flower opens beside the cursor.
+  let lit = null;
+  const light = (plate) => {
+    if (plate === lit) return;
+    lit?.classList.remove('is-lit');
+    lit = plate;
+    lit?.classList.add('is-lit');
+    garden.spotlight(lit);
+  };
   projectsEl?.addEventListener('pointerover', (e) => {
-    const card = e.target.closest('[data-project]');
-    if (card) experience.showProject(Number(card.dataset.project));
+    if (!finePointer(e)) return;
+    const plate = e.target.closest('.plate');
+    if (plate && plate !== lit) {
+      const box = plate.getBoundingClientRect();
+      const x = Math.min(e.clientX + 90, box.right - 60);
+      garden.plantAt(x, e.clientY, { kind: 'cosmos', size: 42, stem: false });
+    }
+    light(plate);
   });
-  projectsEl?.addEventListener('focusin', (e) => {
-    const card = e.target.closest('[data-project]');
-    if (card) experience.showProject(Number(card.dataset.project));
-  });
+  projectsEl?.addEventListener('pointerleave', () => light(null));
+  projectsEl?.addEventListener('focusin', (e) => light(e.target.closest('.plate')));
+  projectsEl?.addEventListener('focusout', () => light(null));
 
-  // Hovering a skill chip makes its orb jump in the jar.
-  const popSkill = (e) => {
-    const b = e.target.closest('[data-skill]');
-    if (b) experience.highlightSkill(b.dataset.skill);
+  // A skill chip under the pointer opens a small flower behind it; more
+  // petals on the chip, bigger flower. Throttled per chip.
+  const lastBloom = new WeakMap();
+  const bloomSkill = (chip) => {
+    const now = performance.now();
+    if (!chip || now - (lastBloom.get(chip) ?? -Infinity) < 2500) return;
+    lastBloom.set(chip, now);
+    const box = chip.getBoundingClientRect();
+    const level = Number(chip.dataset.level) || 3;
+    garden.plantAt(box.left + box.width / 2, box.top + box.height / 2, {
+      kind: 'blossom',
+      size: 30 + level * 7,
+      stem: false,
+    });
   };
-  bubblesEl?.addEventListener('mouseover', popSkill);
-  bubblesEl?.addEventListener('focusin', popSkill);
-}
-
-// ---------- Cursor: a ring that follows the pointer and names 3D objects ----------
-const cursor = document.getElementById('cursor');
-if (cursor && experience && window.matchMedia('(pointer: fine)').matches) {
-  const label = cursor.querySelector('.cursor__label');
-  let x = -100;
-  let y = -100;
-  let cx = x;
-  let cy = y;
-  window.addEventListener(
-    'pointermove',
-    (e) => {
-      x = e.clientX;
-      y = e.clientY;
-      cursor.classList.add('is-on');
-    },
-    { passive: true }
-  );
-  document.addEventListener('pointerleave', () => cursor.classList.remove('is-on'));
-  experience.onHover((text) => {
-    cursor.classList.toggle('is-target', !!text);
-    if (text && label) label.textContent = text;
+  skillsEl?.addEventListener('pointerover', (e) => {
+    if (finePointer(e)) bloomSkill(e.target.closest('.skill'));
   });
-  const follow = () => {
-    cx += (x - cx) * 0.25;
-    cy += (y - cy) * 0.25;
-    cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
-    requestAnimationFrame(follow);
-  };
-  follow();
+  skillsEl?.addEventListener('focusin', (e) => bloomSkill(e.target.closest('.skill')));
 }
 
 // ---------- Footer year ----------
